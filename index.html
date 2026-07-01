@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロモ HP公開 ドメイン判定ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ヘッダー -->
+  <header class="brand">
+    <span class="logo">Promo / Tech Support</span>
+    <h1>HP公開 ドメイン判定ツール</h1>
+    <span class="meta" id="header-meta">園情報の事前整理</span>
+  </header>
+
+  <!-- ステップインジケータ -->
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="0"><span class="num">01</span>園の基本</div>
+    <div class="step" data-step="1"><span class="num">02</span>ドメイン</div>
+    <div class="step" data-step="2"><span class="num">03</span>メール</div>
+    <div class="step" data-step="3"><span class="num">04</span>旧サイト</div>
+    <div class="step" data-step="4"><span class="num">05</span>結果シート</div>
+  </div>
+
+  <!-- STEP 1: 園の基本 -->
+  <div class="panel" id="step-0">
+    <div class="panel-head">
+      <div class="eyebrow">Step 01 / 05</div>
+      <h2>園の基本情報</h2>
+      <p class="desc">ディレクターが事前に把握している基本情報を入力してください。後から追記できます。</p>
+    </div>
+    <div class="form-grid full">
+      <div class="field">
+        <label>園名（正式名称）</label>
+        <span class="hint">法人格を含む正式名称</span>
+        <input type="text" id="garden-name" placeholder="例：学校法人 〇〇学園 〇〇幼稚園">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-top:16px">
+      <div class="field">
+        <label>担当ディレクター</label>
+        <input type="text" id="director-name" placeholder="例：山田 太郎">
+      </div>
+      <div class="field">
+        <label>HP公開希望日</label>
+        <input type="date" id="publish-date">
+      </div>
+    </div>
+    <div class="nav">
+      <span></span>
+      <button class="btn btn-primary" onclick="goStep(1)">次へ：ドメイン →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: ドメイン -->
+  <div class="panel hidden" id="step-1">
+    <div class="panel-head">
+      <div class="eyebrow">Step 02 / 05</div>
+      <h2>ドメインはどうしますか？</h2>
+      <p class="desc">園のHPで使うURL（ドメイン）について、現在の状況を選んでください。</p>
+    </div>
+    <div class="q-group">
+      <div class="q-options">
+        <label class="q-opt">
+          <input type="radio" name="domain" value="new">
+          <div class="q-opt-body">
+            <div class="q-opt-title">新規取得</div>
+            <div class="q-opt-desc">お名前.comで新しくドメインを取得する（例：<code class="inline">〇〇.ed.jp</code>）</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="domain" value="transfer">
+          <div class="q-opt-body">
+            <div class="q-opt-title">移管（弊社管理に切り替え）</div>
+            <div class="q-opt-desc">既存のドメインをお名前.comへ移管して継続利用する</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="domain" value="external">
+          <div class="q-opt-body">
+            <div class="q-opt-title">他社管理を継続</div>
+            <div class="q-opt-desc">ドメインは旧管理会社のまま。AレコードだけAWSに向ける</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="form-grid full" style="margin-top:24px">
+      <div class="field">
+        <label>希望ドメイン名 / 現在のドメイン名</label>
+        <span class="hint">わかる範囲でOK。新規取得の場合は希望候補</span>
+        <input type="text" id="domain-name" placeholder="例：example.ed.jp">
+      </div>
+    </div>
+
+    <!-- 新規取得：取得申請情報（ドメイン選択後に展開） -->
+    <div class="new-domain-form hidden" id="new-domain-form">
+      <div class="new-domain-head">
+        <div class="new-domain-title">ドメイン取得申請情報</div>
+        <p class="new-domain-desc">.ed.jp 等の新規取得時にお名前.comへの申請で必要になる情報です。わかる範囲で入力してください。</p>
+      </div>
+
+      <div class="sub-section">組織情報</div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>法人種類 <span class="badge badge-required">必須</span></label>
+          <select id="new-org-type">
+            <option value="">選択してください</option>
+            <option>学校法人</option>
+            <option>社会福祉法人</option>
+            <option>医療法人</option>
+            <option>宗教法人</option>
+            <option>NPO法人</option>
+            <option>株式会社</option>
+            <option>その他</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>認可を受けているか <span class="badge badge-required">必須</span></label>
+          <select id="new-org-licensed">
+            <option value="">選択してください</option>
+            <option value="yes">受けている</option>
+            <option value="no">受けていない</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>組織名（園名のみ） <span class="badge badge-required">必須</span></label>
+          <span class="hint">「社会福祉法人〜〜」ではなく園名のみ記入</span>
+          <input type="text" id="new-org-name" placeholder="例：プロモ幼稚園">
+        </div>
+        <div class="field">
+          <label>組織名読み仮名 <span class="badge badge-required">必須</span></label>
+          <span class="hint">ひらがなで記入</span>
+          <input type="text" id="new-org-kana" placeholder="例：ぷろもようちえん">
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:12px">
+        <div class="field">
+          <label>園名英語表記 <span class="badge badge-optional">任意</span></label>
+          <input type="text" id="new-org-name-en" placeholder="例：Promo Kindergarten">
+        </div>
+      </div>
+
+      <div class="sub-section" style="margin-top:20px">住所</div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>郵便番号 <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-postal" placeholder="例：141-0031">
+        </div>
+        <div class="field">
+          <label>市区町村・番地 <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-address" placeholder="例：東京都品川区西五反田3-11-6">
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:12px">
+        <div class="field">
+          <label>建物名 <span class="badge badge-optional">任意</span></label>
+          <input type="text" id="new-building" placeholder="例：〇〇ビル 3F">
+        </div>
+      </div>
+
+      <div class="sub-section" style="margin-top:20px">登録担当者</div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>姓名（漢字） <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-contact-name" placeholder="例：田中 歩路茂">
+        </div>
+        <div class="field">
+          <label>姓名（ローマ字） <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-contact-roman" placeholder="例：TANAKA PUROMO">
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>部署名 <span class="badge badge-optional">任意</span></label>
+          <input type="text" id="new-contact-dept" placeholder="例：総務部">
+        </div>
+        <div class="field">
+          <label>役職 <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-contact-title" placeholder="例：園長">
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>電話番号 <span class="badge badge-required">必須</span></label>
+          <input type="tel" id="new-contact-phone" placeholder="例：03-6431-8910">
+        </div>
+        <div class="field">
+          <label>メールアドレス <span class="badge badge-required">必須</span></label>
+          <input type="email" id="new-contact-email" placeholder="例：info@example.ed.jp">
+        </div>
+      </div>
+
+      <div class="sub-section" style="margin-top:20px">登記情報</div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>登記年月日（西暦） <span class="badge badge-required">必須</span></label>
+          <input type="date" id="new-reg-date">
+        </div>
+        <div class="field">
+          <label>登記地住所 <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-reg-address" placeholder="例：東京都品川区西五反田3-11-6">
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field">
+          <label>代表者氏名 <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-rep-name" placeholder="例：田中 歩路茂">
+        </div>
+        <div class="field">
+          <label>代表者氏名（ローマ字） <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-rep-roman" placeholder="例：TANAKA PUROMO">
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:12px">
+        <div class="field">
+          <label>代表者役職 <span class="badge badge-required">必須</span></label>
+          <input type="text" id="new-rep-title" placeholder="例：園長">
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-secondary" onclick="goStep(0)">← 戻る</button>
+      <button class="btn btn-primary" onclick="goStep(2)">次へ：メール →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: メール -->
+  <div class="panel hidden" id="step-2">
+    <div class="panel-head">
+      <div class="eyebrow">Step 03 / 05</div>
+      <h2>メールはどう使いますか？</h2>
+      <p class="desc"><code class="inline">info@〇〇.ed.jp</code> のような独自ドメインのメールについてです。</p>
+    </div>
+    <div class="q-group">
+      <div class="q-options">
+        <label class="q-opt">
+          <input type="radio" name="mail" value="none">
+          <div class="q-opt-body">
+            <div class="q-opt-title">メールは使わない</div>
+            <div class="q-opt-desc">HPだけ公開する。独自ドメインのメールは不要</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="mail" value="new">
+          <div class="q-opt-body">
+            <div class="q-opt-title">新規でメールを始める</div>
+            <div class="q-opt-desc">これからメール運用を開始する（GWS for Education 等を案内）</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="mail" value="continue">
+          <div class="q-opt-body">
+            <div class="q-opt-title">既存のメールをそのまま使う</div>
+            <div class="q-opt-desc">今使っているメールサービスを継続。MX/SPF を既存に向けたまま運用</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-secondary" onclick="goStep(1)">← 戻る</button>
+      <button class="btn btn-primary" onclick="goStep(3)">次へ：旧サイト →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: 旧サイト -->
+  <div class="panel hidden" id="step-3">
+    <div class="panel-head">
+      <div class="eyebrow">Step 04 / 05</div>
+      <h2>旧サイトはありますか？</h2>
+      <p class="desc">現在公開されている園のHPがある場合、リダイレクト要否の判定に使います。</p>
+    </div>
+    <div class="q-group">
+      <div class="q-options">
+        <label class="q-opt">
+          <input type="radio" name="oldsite" value="yes">
+          <div class="q-opt-body">
+            <div class="q-opt-title">あり</div>
+            <div class="q-opt-desc">既存のHPがある</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="oldsite" value="no">
+          <div class="q-opt-body">
+            <div class="q-opt-title">なし</div>
+            <div class="q-opt-desc">新規開設。リダイレクトは不要</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="q-group hidden" id="redirect-group">
+      <label class="q-label">旧サイト → 新サイトへのリダイレクトは必要ですか？</label>
+      <span class="q-hint">古いURLにアクセスした人を新しいHPへ自動で案内するかどうか</span>
+      <div class="q-options">
+        <label class="q-opt">
+          <input type="radio" name="redirect" value="none">
+          <div class="q-opt-body">
+            <div class="q-opt-title">不要</div>
+            <div class="q-opt-desc">転送設定は行わない</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="redirect" value="self">
+          <div class="q-opt-body">
+            <div class="q-opt-title">必要（自社で対応可能）</div>
+            <div class="q-opt-desc">制作陣 or テクサポで完結できる</div>
+          </div>
+        </label>
+        <label class="q-opt">
+          <input type="radio" name="redirect" value="external">
+          <div class="q-opt-body">
+            <div class="q-opt-title">必要（旧管理会社へ依頼）</div>
+            <div class="q-opt-desc">旧サイトのサービス（Wix・ジンドゥー等）側で対応が必要</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn btn-secondary" onclick="goStep(2)">← 戻る</button>
+      <button class="btn btn-primary" onclick="generateResult()">結果を見る →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: 結果シート -->
+  <div class="hidden" id="step-4">
+    <div class="result-head">
+      <div class="meta" id="result-meta"></div>
+      <h2 id="result-garden-name">園さま｜HP公開ヒアリングシート</h2>
+      <div class="pattern-id" id="result-pattern"></div>
+    </div>
+    <div class="risk-banner" id="risk-banner"></div>
+    <div class="result-body" id="result-body"></div>
+
+    <div class="actions">
+      <h3>メールで送信</h3>
+      <div class="email-send">
+        <div class="field">
+          <label>送信先メールアドレス</label>
+          <span class="hint">入力して送信ボタンを押すとメールクライアントが開きます</span>
+          <input type="email" id="recipient-email" placeholder="例：director@smarteducation.jp">
+        </div>
+        <button class="btn btn-primary" onclick="sendEmail()">メールで送信</button>
+      </div>
+
+      <h3 style="margin-top:20px">ファイル出力・共有</h3>
+      <div class="action-buttons">
+        <button class="btn btn-secondary" onclick="copyAsMarkdown()">Markdownでコピー</button>
+        <button class="btn btn-secondary" onclick="downloadAsText()">テキストで保存</button>
+        <button class="btn btn-secondary" onclick="window.print()">印刷・PDF保存</button>
+        <button class="btn btn-secondary" onclick="sendSlack()">Slack共有用文面</button>
+      </div>
+      <div class="nav" style="margin-top:16px">
+        <button class="btn btn-secondary" onclick="goStep(3)">← 質問に戻る</button>
+        <button class="btn btn-secondary" onclick="resetAll()">最初からやり直す</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
