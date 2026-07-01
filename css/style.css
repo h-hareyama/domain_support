@@ -430,7 +430,7 @@ header.brand .meta {
   border: 1.5px solid rgba(38,85,164,0.25);
   border-radius: 8px;
 }
-.new-domain-head { m.new-domain-head { margin-bottom: 14px; }
+.new-domain-head { margin-bottom: 14px; }
 .new-domain-title {
   font-size: 14px; font-weight: 700; color: var(--brand);
 }
@@ -457,6 +457,20 @@ header.brand .meta {
   .email-send { grid-template-columns: 1fr; }
   .email-send .btn { width: 100%; }
 }
+
+.btn-same-addr {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--brand);
+  background: var(--brand-pale);
+  color: var(--brand);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.btn-same-addr:hover { background: var(--brand); color: #fff; }
 
 .hidden { display: none !important; }
 

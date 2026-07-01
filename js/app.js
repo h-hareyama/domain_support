@@ -126,8 +126,8 @@ const QUESTIONS = [
     why: 'Wix/ジンドゥー/WordPress等。ジンドゥーはリダイレクト機能に制限あり',
     cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-3', cat: '旧サイト', required: true,
-    q: '旧サイトの契約者名義',
-    why: '解約手続き・変更手続きに必要',
+    q: '旧サイトの管理会社',
+    why: '解約・リダイレクト依頼の連絡先となる会社名',
     cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-4', cat: '旧サイト', required: false,
     q: '旧サイトの維持期間',
@@ -323,6 +323,30 @@ function goStep(n) {
 // ═══════════════════════════════════════════
 // 初期化：イベントリスナー登録
 // ═══════════════════════════════════════════
+// 郵便番号 → 住所補完（zipcloud API）
+// ═══════════════════════════════════════════
+async function lookupPostal(digits, targetId) {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  try {
+    const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${digits}`);
+    const json = await res.json();
+    if (json.results && json.results.length > 0) {
+      const r = json.results[0];
+      const addr = r.address1 + r.address2 + r.address3;
+      target.value = addr;
+      target.focus();
+      target.setSelectionRange(addr.length, addr.length);
+      showToast('住所を自動入力しました。番地・号を続けて入力してください', 'success');
+    } else {
+      showToast('該当する住所が見つかりませんでした', 'error');
+    }
+  } catch {
+    showToast('住所の取得に失敗しました（通信エラー）', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   // 新規取得選択時に取得申請フォームを表示
   document.querySelectorAll('input[name="domain"]').forEach(el => {
@@ -345,6 +369,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('input[name="redirect"]').forEach(el => {
     el.addEventListener('change', () => state.redirect = el.value);
+  });
+
+  // 郵便番号 → 住所自動入力
+  document.getElementById('new-postal').addEventListener('input', function() {
+    const digits = this.value.replace(/[^\d]/g, '');
+    if (digits.length === 7) lookupPostal(digits, 'new-address');
   });
 });
 
