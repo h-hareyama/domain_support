@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>プロモ HP公開 ドメイン判定ツール</title>
+<title>ホームページ公開 準備フォーム</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
@@ -15,9 +15,9 @@
 
   <!-- ヘッダー -->
   <header class="brand">
-    <span class="logo">Promo / Tech Support</span>
-    <h1>HP公開 ドメイン判定ツール</h1>
-    <span class="meta" id="header-meta">園情報の事前整理</span>
+    <span class="logo">スマートエデュケーション</span>
+    <h1>ホームページ公開 準備フォーム</h1>
+    <span class="meta" id="header-meta">HPの公開に必要な情報をご入力ください</span>
   </header>
 
   <!-- ステップインジケータ -->
@@ -93,8 +93,8 @@
     </div>
     <div class="form-grid full" style="margin-top:24px">
       <div class="field">
-        <label>希望ドメイン名 / 現在のドメイン名</label>
-        <span class="hint">わかる範囲でOK。新規取得の場合は希望候補</span>
+        <label id="domain-name-label">希望ドメイン名 / 現在のドメイン名</label>
+        <span class="hint" id="domain-name-hint">わかる範囲でOK。新規取得の場合は希望候補</span>
         <input type="text" id="domain-name" placeholder="例：example.ed.jp">
       </div>
     </div>
@@ -206,7 +206,7 @@
           <input type="date" id="new-reg-date">
         </div>
         <div class="field">
-          <label>登記地住所 <span class="badge badge-required">必須</span></label>
+          <label>登記地住所 <span class="badge badge-required">必須</span> <button type="button" class="btn-same-addr" onclick="document.getElementById('new-reg-address').value=document.getElementById('new-address').value">上と同じ住所</button></label>
           <input type="text" id="new-reg-address" placeholder="例：東京都品川区西五反田3-11-6">
         </div>
       </div>
@@ -360,15 +360,4 @@
       </div>
       <div class="nav" style="margin-top:16px">
         <button class="btn btn-secondary" onclick="goStep(3)">← 質問に戻る</button>
-        <button class="btn btn-secondary" onclick="resetAll()">最初からやり直す</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script src="js/app.js"></script>
-</body>
-</html>
+  

@@ -348,10 +348,20 @@ async function lookupPostal(digits, targetId) {
 
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // 新規取得選択時に取得申請フォームを表示
+  // ドメイン選択時：ラベル切り替え＋新規フォーム表示制御
+  const DOMAIN_LABEL = {
+    new:      { label: '希望ドメイン名',   hint: '希望する候補をわかる範囲で入力してください' },
+    transfer: { label: '現在のドメイン名', hint: '移管元の既存ドメインを入力してください' },
+    external: { label: '現在のドメイン名', hint: '現在使用中のドメインを入力してください' },
+  };
   document.querySelectorAll('input[name="domain"]').forEach(el => {
     el.addEventListener('change', () => {
-      const form = document.getElementById('new-domain-form');
+      const form  = document.getElementById('new-domain-form');
+      const lbl   = document.getElementById('domain-name-label');
+      const hint  = document.getElementById('domain-name-hint');
+      const map   = DOMAIN_LABEL[el.value] || {};
+      if (lbl)  lbl.textContent  = map.label || '希望ドメイン名 / 現在のドメイン名';
+      if (hint) hint.textContent = map.hint  || 'わかる範囲でOK';
       if (el.value === 'new') form.classList.remove('hidden');
       else form.classList.add('hidden');
     });
