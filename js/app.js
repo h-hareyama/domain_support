@@ -530,6 +530,17 @@ function generateResult(silent = false) {
 
 function saveAnswer(qid, val) { state.answers[qid] = val; }
 
+// DOM上の全入力値を state.answers に同期（送信前に必ず呼ぶ）
+function syncAnswersFromDOM() {
+  document.querySelectorAll('[data-qid]').forEach(el => {
+    state.answers[el.dataset.qid] = el.value.trim();
+  });
+  const dnEl = document.getElementById('domain-name');
+  if (dnEl) state.domainName = dnEl.value.trim();
+  if (state.domain === 'new') syncOrgFields();
+  syncRedirectFields();
+}
+
 function toggleCheck(qid, el) {
   state.checked[qid] = !state.checked[qid];
   el.classList.toggle('checked');
@@ -604,7 +615,7 @@ function buildMarkdown() {
 }
 
 function sendEmail() {
-  syncOrgFields();
+  syncAnswersFromDOM();
   const email = state.recipientEmail;
   if (!email) {
     showToast('送信先メールアドレスを入力してください', 'error');
@@ -613,17 +624,29 @@ function sendEmail() {
   const risk = calcRisk(state);
   const pid = patternId(state);
   const subject = `【HP公開ヒアリングシート】${state.gardenName || '〇〇園'}さま`;
+  const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
+  const mailLabel   = {none:'なし', new:'新規', continue:'既存継続'}[state.mail] || '—';
 
   let body = `${state.gardenName || '〇〇園'} さまのHP公開ヒアリングシートです。\n\n`;
   body += `■ パターンID: ${pid}\n`;
   body += `■ リスク評価: ${risk.label}\n`;
   body += `■ 公開希望日: ${state.publishDate || '—'}\n`;
-  body += `■ 担当ディレクター: ${state.directorName || '—'}\n`;
-  body += `■ ドメイン: ${ {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] }\n`;
-  body += `■ メール: ${ {none:'なし', new:'新規', continue:'既存継続'}[state.mail] }\n`;
-  if (state.oldsite === 'yes') body += `■ 旧サイト: あり\n`;
-  body += `\n---\n`;
-  body += `詳細はヒアリングシートを「テキストで保存」してご確認ください。\n`;
+  body += `■ 担当: ${state.directorName || '—'}\n`;
+  body += `■ ドメイン: ${domainLabel}\n`;
+  body += `■ メール: ${mailLabel}\n`;
+  body += `■ 旧サイト: ${state.oldsite === 'yes' ? 'あり' : 'なし'}\n`;
+  body += `\n【ヒアリング内容】\n`;
+
+  const visible = QUESTIONS.filter(q => q.cond(state));
+  let lastCat = '';
+  visible.forEach(q => {
+    if (q.cat !== lastCat) { body += `\n＜${q.cat}＞\n`; lastCat = q.cat; }
+    const ans = state.answers[q.id] || '（未記入）';
+    body += `▼ ${q.q}\n  → ${ans}\n`;
+  });
+
+  if (state.domainName) body += `\n▼ ドメイン名\n  → ${state.domainName}\n`;
+  body += `\n---\nスマートエデュケーション ホームページ公開準備フォームより自動生成\n`;
 
   const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   window.location.href = mailto;
@@ -654,21 +677,30 @@ function downloadAsText() {
 }
 
 function sendSlack() {
+  syncAnswersFromDOM();
   const risk = calcRisk(state);
   const pid = patternId(state);
+  const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
+  const mailLabel   = {none:'なし', new:'新規', continue:'既存継続'}[state.mail] || '—';
   const visible = QUESTIONS.filter(q => q.cond(state));
-  let text = `*【HP公開ヒアリングシート】*\n`;
+
+  let text = `【HP公開ヒアリングシート】\n`;
   text += `▼園名: ${state.gardenName || '—'}\n`;
-  text += `▼担当D: ${state.directorName || '—'}\n`;
+  text += `▼担当: ${state.directorName || '—'}\n`;
   text += `▼公開希望日: ${state.publishDate || '—'}\n`;
-  text += `▼パターンID: \`${pid}\`\n`;
+  text += `▼パターンID: ${pid}\n`;
   text += `▼リスク: ${risk.label}\n`;
-  text += `▼確認項目数: ${visible.length} 項目\n\n`;
-  text += `*要確認項目:*\n`;
-  visible.filter(q => q.required && !state.checked[q.id]).forEach(q => {
-    text += `• ${q.cat} / ${q.q}\n`;
+  text += `▼ドメイン: ${domainLabel} / メール: ${mailLabel} / 旧サイト: ${state.oldsite === 'yes' ? 'あり' : 'なし'}\n`;
+  if (state.domainName) text += `▼ドメイン名: ${state.domainName}\n`;
+  text += `\n`;
+
+  let lastCat = '';
+  visible.forEach(q => {
+    if (q.cat !== lastCat) { text += `\n＜${q.cat}＞\n`; lastCat = q.cat; }
+    const ans = state.answers[q.id] || '（未記入）';
+    const req = q.required ? '【必須】' : '【任意】';
+    text += `${req} ${q.q}\n  → ${ans}\n`;
   });
-  text += `\n_全項目はMarkdown形式で別途共有します_`;
 
   navigator.clipboard.writeText(text).then(() => {
     showToast('文面をコピーしました。メール・チャット等に貼り付けて送信してください', 'success');
