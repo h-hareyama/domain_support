@@ -633,7 +633,7 @@ function sendEmail() {
 function copyAsMarkdown() {
   const md = buildMarkdown();
   navigator.clipboard.writeText(md).then(() => {
-    showToast('Markdown形式でコピーしました。Notion・Slackに貼り付けできます', 'success');
+    showToast('Markdown形式でコピーしました。NotionやGoogleドキュメント等に貼り付けできます', 'success');
   }).catch(() => {
     showToast('クリップボードへのアクセスが拒否されました', 'error');
   });
@@ -671,7 +671,7 @@ function sendSlack() {
   text += `\n_全項目はMarkdown形式で別途共有します_`;
 
   navigator.clipboard.writeText(text).then(() => {
-    showToast('Slack共有用の文面をコピーしました。Slackに貼り付けて送信してください', 'success');
+    showToast('文面をコピーしました。メール・チャット等に貼り付けて送信してください', 'success');
   }).catch(() => {
     showToast('クリップボードへのアクセスが拒否されました', 'error');
   });
