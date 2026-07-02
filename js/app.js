@@ -247,19 +247,23 @@ function buildOrgSection() {
 // リスク判定
 // ═══════════════════════════════════════════
 function calcRisk(s) {
-  // High: 既存メール継続 = 設定ミスでメール停止リスク
-  if (s.mail === 'continue') return {
+  // High: 移管 ＋ 既存メール継続
+  //   → DNS が丸ごと再構築されるため MX/SPF を設定ミスするとメール停止
+  if (s.domain === 'transfer' && s.mail === 'continue') return {
     level: 'high',
     label: 'リスク：高（メール停止に注意）',
-    msg: '既存メール継続のため、MX/SPF設定を間違えるとメール停止のリスクがあります。DNS切替日とメール停止許容時間を必ず園と合意してください。'
+    msg: '移管によりDNSが再構築されます。MX/SPF設定を間違えるとメール停止のリスクがあります。DNS切替日とメール停止許容時間を必ず園と合意してください。'
   };
-  // Mid: 移管あり または リダイレクト必要
-  if (s.domain === 'transfer' || s.redirect === 'needed') return {
+  // Mid: 移管あり / リダイレクト必要 / 新規ドメイン＋既存メール継続
+  //   ※ 他社管理継続＋メール継続はAレコードのみ変更のためMXは無関係 → Low
+  if (s.domain === 'transfer' ||
+      s.redirect === 'needed' ||
+      (s.domain === 'new' && s.mail === 'continue')) return {
     level: 'mid',
-    label: 'リスク：中（外部依存の可能性あり）',
-    msg: '移管手続き or 旧サイトへのリダイレクト設定が必要なため、リードタイムに余裕を持って動いてください。'
+    label: 'リスク：中（外部調整が必要）',
+    msg: '移管手続き・リダイレクト設定・新規DNS上でのメール設定など、外部への調整が必要です。リードタイムに余裕を持って動いてください。'
   };
-  // Low: 新規取得シンプル
+  // Low: それ以外（他社管理継続＋Aレコード変更のみ、など）
   return {
     level: 'low',
     label: 'リスク：低（シンプルケース）',
