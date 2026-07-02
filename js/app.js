@@ -38,102 +38,124 @@ const QUESTIONS = [
   { id: 'q-www', cat: '基本', required: true,
     q: 'URLに「www」を付けますか？',
     why: '制作陣に事前確認。DNS設定に影響',
+    placeholder: '例：付ける（www.example.ed.jp）/ 付けない',
     cond: () => true, type: 'text' },
 
   // ── ドメイン新規 ──
   { id: 'q-newdom-1', cat: 'ドメイン', required: true,
     q: '希望ドメインの候補（第1〜第3希望）',
     why: '取得できない場合の予備として',
+    placeholder: '例：jiro-yochien.ed.jp, jiro.ed.jp, jiro-kindergarten.jp',
     cond: s => s.domain === 'new', type: 'textarea' },
   { id: 'q-newdom-2', cat: 'ドメイン', required: false,
     q: '.ed.jp取得の場合：認可証・在園証明書類',
     why: '.ed.jpは実在証明が必要。書類準備が必要',
+    placeholder: '例：認可証コピーを準備済み / 確認中',
     cond: s => s.domain === 'new', type: 'text' },
 
   // ── ドメイン移管 ──
   { id: 'q-mov-1', cat: 'ドメイン', required: true,
     q: '現在のドメイン管理会社',
     why: '移管手続きの依頼先',
+    placeholder: '例：〇〇株式会社 / お名前.com',
     cond: s => s.domain === 'transfer', type: 'text' },
   { id: 'q-mov-2', cat: 'ドメイン', required: true,
     q: 'AuthCode（移管認証コード）の取得状況',
     why: '移管に必須。発行から7〜30日で失効',
+    placeholder: '例：取得済み / 管理会社に依頼中',
     cond: s => s.domain === 'transfer', type: 'text' },
   { id: 'q-mov-3', cat: 'ドメイン', required: true,
     q: 'ドメイン有効期限',
     why: '残14〜30日を切ると移管不可',
+    placeholder: '例：2027年3月31日',
     cond: s => s.domain === 'transfer', type: 'text' },
   { id: 'q-mov-4', cat: 'ドメイン', required: false,
     q: '移管ロック（DomainTransferLocked）の状況',
     why: 'ロック中の場合は解除依頼が必要',
+    placeholder: '例：解除済み / 解除依頼中',
     cond: s => s.domain === 'transfer', type: 'text' },
 
   // ── ドメイン他社継続 ──
   { id: 'q-ext-1', cat: 'ドメイン', required: true,
     q: '現在のドメイン管理会社',
     why: 'Aレコード変更を依頼する相手',
+    placeholder: '例：〇〇株式会社 / お名前.com',
     cond: s => s.domain === 'external', type: 'text' },
   { id: 'q-ext-2', cat: 'ドメイン', required: true,
     q: '管理会社への連絡窓口（メール/電話）',
     why: 'Aレコード変更依頼の送付先',
+    placeholder: '例：info@example.com / 03-XXXX-XXXX',
     cond: s => s.domain === 'external', type: 'text' },
   { id: 'q-ext-3', cat: 'ドメイン', required: true,
     q: '管理会社の管理画面ログイン情報の有無',
     why: '園側で対応できる範囲を判断するため',
+    placeholder: '例：ID・パスワードあり / 不明',
     cond: s => s.domain === 'external', type: 'text' },
 
   // ── メール新規 ──
   { id: 'q-mailnew-1', cat: 'メール', required: true,
     q: '必要なメールアドレスの数',
     why: 'GWSのライセンス数の見積もりに必要',
+    placeholder: '例：3アドレス（園長・事務・info@）',
     cond: s => s.mail === 'new', type: 'text' },
   { id: 'q-mailnew-2', cat: 'メール', required: true,
     q: '各アドレスの命名希望',
     why: '例：info@, admin@, principal@など',
+    placeholder: '例：info@, principal@, office@',
     cond: s => s.mail === 'new', type: 'textarea' },
   { id: 'q-mailnew-3', cat: 'メール', required: true,
     q: '教育機関認証書類（GWS申請時に必要）',
     why: 'GWS for Education申請時に提出',
+    placeholder: '例：認定証コピーを準備済み / 確認中',
     cond: s => s.mail === 'new', type: 'text' },
 
   // ── メール継続 ──
   { id: 'q-mailcon-1', cat: 'メール', required: true,
     q: '現在のメールサービス名',
     why: '例：さくらメール、GMOクラウド、Xserver等',
+    placeholder: '例：さくらメール / Xserver / GMOクラウド',
     cond: s => s.mail === 'continue', type: 'text' },
   { id: 'q-mailcon-2', cat: 'メール', required: true,
     q: 'MXレコードの値',
     why: 'メール宛先サーバ。DNS設定で必須',
+    placeholder: '例：MX 10 mail.example.com',
     cond: s => s.mail === 'continue', type: 'text' },
   { id: 'q-mailcon-3', cat: 'メール', required: true,
     q: 'SPFレコードの値',
     why: '送信元認証用。なりすまし防止',
+    placeholder: '例：v=spf1 include:example.com ~all',
     cond: s => s.mail === 'continue', type: 'text' },
   { id: 'q-mailcon-4', cat: 'メール', required: false,
     q: 'DKIM/DMARC設定（設定がある場合のみ）',
     why: 'メール認証強化。設定済みなら継続必須',
+    placeholder: '例：設定なし / v=DMARC1;p=none...',
     cond: s => s.mail === 'continue', type: 'textarea' },
   { id: 'q-mailcon-5', cat: 'メール', required: false,
     q: '既存メールサーバのIPアドレス',
     why: 'AWSにメール専用Aレコード作成時に使用',
+    placeholder: '例：123.456.78.9',
     cond: s => s.mail === 'continue', type: 'text' },
 
   // ── 旧サイト関連 ──
   { id: 'q-old-1', cat: '旧サイト', required: true,
     q: '旧サイトのURL',
     why: 'リダイレクト元として使用',
+    placeholder: '例：https://www.example.com',
     cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-2', cat: '旧サイト', required: true,
     q: '旧サイトの公開先サービス',
     why: 'Wix/ジンドゥー/WordPress等。ジンドゥーはリダイレクト機能に制限あり',
+    placeholder: '例：Wix / ジンドゥー / WordPress',
     cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-3', cat: '旧サイト', required: true,
     q: '旧サイトの管理会社',
     why: '解約・リダイレクト依頼の連絡先となる会社名',
+    placeholder: '例：〇〇株式会社',
     cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-4', cat: '旧サイト', required: false,
     q: '旧サイトの維持期間',
     why: 'リダイレクトを維持するため旧ドメインの契約継続が必要',
+    placeholder: '例：2026年9月まで',
     cond: s => s.oldsite === 'yes' && s.redirect === 'needed', type: 'text' },
 ];
 
@@ -483,12 +505,12 @@ function generateResult(silent = false) {
       const badge = q.required
         ? '<span class="badge badge-required">必須</span>'
         : '<span class="badge badge-optional">任意</span>';
+      const ph = q.placeholder || '内容を記入';
       const input = q.type === 'textarea'
-        ? `<textarea data-qid="${q.id}" placeholder="園の担当者に確認した内容を記入" onchange="saveAnswer('${q.id}', this.value)">${state.answers[q.id] || ''}</textarea>`
-        : `<input type="text" data-qid="${q.id}" placeholder="園の担当者に確認した内容を記入" value="${state.answers[q.id] || ''}" onchange="saveAnswer('${q.id}', this.value)">`;
+        ? `<textarea data-qid="${q.id}" placeholder="${ph}" onchange="saveAnswer('${q.id}', this.value)">${state.answers[q.id] || ''}</textarea>`
+        : `<input type="text" data-qid="${q.id}" placeholder="${ph}" value="${state.answers[q.id] || ''}" onchange="saveAnswer('${q.id}', this.value)">`;
       html += `
         <div class="ask-item">
-          <div class="ask-check ${state.checked[q.id] ? 'checked' : ''}" onclick="toggleCheck('${q.id}', this)"></div>
           <div class="ask-body">
             <div class="ask-title">${q.q}${badge}</div>
             <div class="ask-why">${q.why}</div>
@@ -546,10 +568,9 @@ function buildMarkdown() {
     if (!byCat[cat]) return;
     md += `## ${cat}\n\n`;
     byCat[cat].forEach(q => {
-      const mark = state.checked[q.id] ? 'x' : ' ';
       const req = q.required ? '【必須】' : '【任意】';
       const ans = state.answers[q.id] || '';
-      md += `- [${mark}] ${req} **${q.q}**\n`;
+      md += `- ${req} **${q.q}**\n`;
       md += `  - 確認理由: ${q.why}\n`;
       if (ans) md += `  - 回答: ${ans}\n`;
       md += `\n`;
@@ -632,15 +653,13 @@ function sendSlack() {
   const risk = calcRisk(state);
   const pid = patternId(state);
   const visible = QUESTIONS.filter(q => q.cond(state));
-  const checkedCount = visible.filter(q => state.checked[q.id]).length;
-
   let text = `*【HP公開ヒアリングシート】*\n`;
   text += `▼園名: ${state.gardenName || '—'}\n`;
   text += `▼担当D: ${state.directorName || '—'}\n`;
   text += `▼公開希望日: ${state.publishDate || '—'}\n`;
   text += `▼パターンID: \`${pid}\`\n`;
   text += `▼リスク: ${risk.label}\n`;
-  text += `▼進捗: ${checkedCount}/${visible.length} 項目確認済み\n\n`;
+  text += `▼確認項目数: ${visible.length} 項目\n\n`;
   text += `*要確認項目:*\n`;
   visible.filter(q => q.required && !state.checked[q.id]).forEach(q => {
     text += `• ${q.cat} / ${q.q}\n`;
