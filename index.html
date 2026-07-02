@@ -162,7 +162,7 @@
     </div>
     <div class="q-group hidden" id="redirect-group">
       <label class="q-label">旧サイト → 新サイトへのリダイレクトは必要ですか？</label>
-      <span class="q-hint">古いURLにアクセスした人を新しいHPへ自動で案内するかどうか</span>
+      <span class="q-hint">古いURLにアクセスした人を新しいHPへ自動で案内する「転送設定」のことです</span>
       <div class="q-options">
         <label class="q-opt">
           <input type="radio" name="redirect" value="none">
@@ -172,17 +172,10 @@
           </div>
         </label>
         <label class="q-opt">
-          <input type="radio" name="redirect" value="self">
+          <input type="radio" name="redirect" value="needed">
           <div class="q-opt-body">
-            <div class="q-opt-title">必要（自社で対応可能）</div>
-            <div class="q-opt-desc">制作陣 or テクサポで完結できる</div>
-          </div>
-        </label>
-        <label class="q-opt">
-          <input type="radio" name="redirect" value="external">
-          <div class="q-opt-body">
-            <div class="q-opt-title">必要（旧管理会社へ依頼）</div>
-            <div class="q-opt-desc">旧サイトのサービス（Wix・ジンドゥー等）側で対応が必要</div>
+            <div class="q-opt-title">必要</div>
+            <div class="q-opt-desc">古いURLへのアクセスを新しいHPに自動で転送したい</div>
           </div>
         </label>
       </div>
@@ -342,6 +335,42 @@
             <label>代表者役職 <span class="badge badge-required">必須</span></label>
             <input type="text" id="new-rep-title" placeholder="例：園長">
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- リダイレクト情報入力（リダイレクト必要の場合のみ表示） -->
+    <div class="panel hidden" id="s5-redirect-panel" style="margin:20px 0">
+      <div class="panel-head">
+        <div class="eyebrow">リダイレクト情報</div>
+        <p class="desc" style="margin:4px 0 0">旧HPからの転送設定のために必要な情報です。わかる範囲で入力してください。</p>
+      </div>
+      <div class="form-grid" style="margin-top:16px">
+        <div class="field">
+          <label>現在のWEB制作会社 <span class="badge badge-optional">わかれば</span></label>
+          <span class="hint">旧HPを作った会社・サービス名</span>
+          <input type="text" id="redirect-web-company" placeholder="例：〇〇制作会社 / ジンドゥー / Wix">
+        </div>
+        <div class="field">
+          <label>ドメイン管理会社 <span class="badge badge-optional">わかれば</span></label>
+          <span class="hint">現在ドメインを管理している会社・サービス</span>
+          <input type="text" id="redirect-domain-company" placeholder="例：お名前.com / Xserver / ムームードメイン">
+        </div>
+      </div>
+      <div class="form-grid full" style="margin-top:12px">
+        <div class="field">
+          <label>旧HPを作ったツール・サービス <span class="badge badge-optional">わかれば</span></label>
+          <span class="hint">リダイレクト設定の可否に影響します</span>
+          <select id="redirect-tool">
+            <option value="">わからない場合は空欄でOK</option>
+            <option value="jimdoo">ジンドゥー (Jimdo)</option>
+            <option value="wix">Wix</option>
+            <option value="wordpress">WordPress</option>
+            <option value="studio">STUDIO</option>
+            <option value="amebaownd">Ameba Ownd</option>
+            <option value="google">Googleサイト</option>
+            <option value="other">その他・不明</option>
+          </select>
         </div>
       </div>
     </div>

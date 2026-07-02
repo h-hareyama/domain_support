@@ -106,6 +106,13 @@ header.brand .meta {
   font-weight: 700;
   color: var(--muted);
 }
+.step.done {
+  cursor: pointer;
+}
+.step.done:hover {
+  background: var(--brand-pale);
+  color: var(--brand-dark);
+}
 .step.active {
   background: var(--brand);
   color: #fff;

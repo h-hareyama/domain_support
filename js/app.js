@@ -13,9 +13,11 @@ const state = {
   domain: '',     // new / transfer / external
   mail: '',       // none / new / continue
   oldsite: '',    // yes / no
-  redirect: '',   // none / self / external
+  redirect: '',   // none / needed
+  redirectWebCompany: '', redirectDomainCompany: '', redirectTool: '',
   answers: {},    // 動的ヒアリング項目の回答
   checked: {},    // チェック状態
+  maxStep: 0,     // 到達済み最大ステップ番号
 
   // 新規取得：取得申請情報
   newOrgType: '', newOrgLicensed: '', newOrgName: '', newOrgKana: '', newOrgNameEn: '',
@@ -131,28 +133,8 @@ const QUESTIONS = [
     cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-4', cat: '旧サイト', required: false,
     q: '旧サイトの維持期間',
-    why: 'リダイレクトを維持するため契約継続が必要',
-    cond: s => s.oldsite === 'yes' && s.redirect !== 'none', type: 'text' },
-
-  // ── リダイレクト（自社） ──
-  { id: 'q-red-self-1', cat: 'リダイレクト', required: true,
-    q: 'リダイレクトの種類',
-    why: 'www切替 / 旧→新ドメイン / 両方',
-    cond: s => s.redirect === 'self', type: 'text' },
-
-  // ── リダイレクト（他社依頼） ──
-  { id: 'q-red-ext-1', cat: 'リダイレクト', required: true,
-    q: '旧管理会社の連絡窓口',
-    why: 'リダイレクト依頼の送付先',
-    cond: s => s.redirect === 'external', type: 'text' },
-  { id: 'q-red-ext-2', cat: 'リダイレクト', required: true,
-    q: '旧ドメインの契約継続可否',
-    why: '契約が切れるとリダイレクトも消える',
-    cond: s => s.redirect === 'external', type: 'text' },
-  { id: 'q-red-ext-3', cat: 'リダイレクト', required: false,
-    q: '想定費用',
-    why: '管理会社によっては別途費用が発生',
-    cond: s => s.redirect === 'external', type: 'text' },
+    why: 'リダイレクトを維持するため旧ドメインの契約継続が必要',
+    cond: s => s.oldsite === 'yes' && s.redirect === 'needed', type: 'text' },
 ];
 
 // ═══════════════════════════════════════════
@@ -179,6 +161,19 @@ const ORG_FIELD_MAP = [
   ['newRepRoman',     'new-rep-roman'],
   ['newRepTitle',     'new-rep-title'],
 ];
+
+const REDIRECT_FIELD_MAP = [
+  ['redirectWebCompany',    'redirect-web-company'],
+  ['redirectDomainCompany', 'redirect-domain-company'],
+  ['redirectTool',          'redirect-tool'],
+];
+
+function syncRedirectFields() {
+  REDIRECT_FIELD_MAP.forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) state[key] = el.value.trim();
+  });
+}
 
 function syncOrgFields() {
   const dnEl = document.getElementById('domain-name');
@@ -236,11 +231,11 @@ function calcRisk(s) {
     label: 'リスク：高（メール停止に注意）',
     msg: '既存メール継続のため、MX/SPF設定を間違えるとメール停止のリスクがあります。DNS切替日とメール停止許容時間を必ず園と合意してください。'
   };
-  // Mid: 移管あり または リダイレクト他社依頼
-  if (s.domain === 'transfer' || s.redirect === 'external') return {
+  // Mid: 移管あり または リダイレクト必要
+  if (s.domain === 'transfer' || s.redirect === 'needed') return {
     level: 'mid',
-    label: 'リスク：中（外部依存あり）',
-    msg: '移管手続き or 他社へのリダイレクト依頼が必要なため、リードタイムに余裕を持って動いてください。'
+    label: 'リスク：中（外部依存の可能性あり）',
+    msg: '移管手続き or 旧サイトへのリダイレクト設定が必要なため、リードタイムに余裕を持って動いてください。'
   };
   // Low: 新規取得シンプル
   return {
@@ -257,7 +252,7 @@ function patternId(s) {
   const d = { new: 'N', transfer: 'T', external: 'X' }[s.domain] || '?';
   const m = { none: '0', new: 'N', continue: 'C' }[s.mail] || '?';
   const o = s.oldsite === 'yes' ? 'O' : '_';
-  const r = { none: '0', self: 'S', external: 'X' }[s.redirect] || '_';
+  const r = { none: '0', needed: 'R' }[s.redirect] || '_';
   return `D${d}-M${m}-${o}${r}`;
 }
 
@@ -280,27 +275,31 @@ function showToast(msg, type = 'info') {
 // ═══════════════════════════════════════════
 // ステップ遷移
 // ═══════════════════════════════════════════
-function goStep(n) {
-  // バリデーション
-  if (n === 1 && !document.getElementById('garden-name').value.trim()) {
-    showToast('園名を入力してください', 'error');
-    return;
-  }
-  if (n === 2) {
-    const d = document.querySelector('input[name="domain"]:checked');
-    if (!d) { showToast('ドメインの扱いを選択してください', 'error'); return; }
-    state.domain = d.value;
-  }
-  if (n === 3) {
-    const m = document.querySelector('input[name="mail"]:checked');
-    if (!m) { showToast('メールの扱いを選択してください', 'error'); return; }
-    state.mail = m.value;
+function goStep(n, force = false) {
+  // バリデーション（force=true の場合はスキップ）
+  if (!force) {
+    if (n === 1 && !document.getElementById('garden-name').value.trim()) {
+      showToast('園名を入力してください', 'error');
+      return;
+    }
+    if (n === 2) {
+      const d = document.querySelector('input[name="domain"]:checked');
+      if (!d) { showToast('ドメインの扱いを選択してください', 'error'); return; }
+      state.domain = d.value;
+    }
+    if (n === 3) {
+      const m = document.querySelector('input[name="mail"]:checked');
+      if (!m) { showToast('メールの扱いを選択してください', 'error'); return; }
+      state.mail = m.value;
+    }
   }
 
   // 状態保存
   state.gardenName = document.getElementById('garden-name').value.trim();
   state.directorName = document.getElementById('director-name').value.trim();
   state.publishDate = document.getElementById('publish-date').value;
+  // 到達済み最大ステップを更新
+  if (n > state.maxStep) state.maxStep = n;
   state.domainName = document.getElementById('domain-name').value.trim();
 
   // パネル切替
@@ -365,6 +364,23 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', () => state.redirect = el.value);
   });
 
+  // ステッパークリックでナビゲーション（訪問済みのみ）
+  document.querySelectorAll('.stepper .step').forEach((el, i) => {
+    el.style.cursor = 'default';
+    el.addEventListener('click', () => {
+      if (i > state.maxStep) {
+        showToast('まず順番にステップを進めてください', 'info');
+        return;
+      }
+      if (i === 4) {
+        // 結果シートへは generateResult を再実行して最新内容を反映
+        generateResult(true);
+      } else {
+        goStep(i, true);
+      }
+    });
+  });
+
   // 郵便番号 → 住所自動入力
   document.getElementById('new-postal').addEventListener('input', function() {
     const digits = this.value.replace(/[^\d]/g, '');
@@ -375,25 +391,43 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════
 // 結果生成
 // ═══════════════════════════════════════════
-function generateResult() {
-  // DOM から直接読み取って state を同期（戻り操作後のズレ防止）
-  const oldsiteEl = document.querySelector('input[name="oldsite"]:checked');
+function generateResult(silent = false) {
+  // DOM から全ラジオ・テキストを再同期（戻って変更後も正しく反映するため）
+  state.gardenName   = document.getElementById('garden-name').value.trim();
+  state.directorName = document.getElementById('director-name').value.trim();
+  state.publishDate  = document.getElementById('publish-date').value;
+  const domainEl   = document.querySelector('input[name="domain"]:checked');
+  const mailEl     = document.querySelector('input[name="mail"]:checked');
+  const oldsiteEl  = document.querySelector('input[name="oldsite"]:checked');
   const redirectEl = document.querySelector('input[name="redirect"]:checked');
-  state.oldsite  = oldsiteEl  ? oldsiteEl.value  : '';
-  state.redirect = redirectEl ? redirectEl.value : '';
+  if (domainEl)  state.domain  = domainEl.value;
+  if (mailEl)    state.mail    = mailEl.value;
+  state.oldsite  = oldsiteEl  ? oldsiteEl.value  : state.oldsite;
+  state.redirect = redirectEl ? redirectEl.value : state.redirect;
 
-  // 旧サイトあり選択時はリダイレクトも必須
-  if (!state.oldsite) {
-    showToast('旧サイトの有無を選択してください', 'error');
-    return;
-  }
-  if (state.oldsite === 'yes' && !state.redirect) {
-    showToast('リダイレクトの要否を選択してください', 'error');
-    return;
+  if (!silent) {
+    if (!state.oldsite) {
+      showToast('旧サイトの有無を選択してください', 'error');
+      return;
+    }
+    if (state.oldsite === 'yes' && !state.redirect) {
+      showToast('リダイレクトの要否を選択してください', 'error');
+      return;
+    }
   }
 
   const risk = calcRisk(state);
   const pid = patternId(state);
+
+  // 最大到達ステップ更新
+  state.maxStep = 4;
+
+  // リダイレクトパネルの表示制御
+  const rdPanel = document.getElementById('s5-redirect-panel');
+  if (rdPanel) {
+    if (state.redirect === 'needed') rdPanel.classList.remove('hidden');
+    else rdPanel.classList.add('hidden');
+  }
 
   // ドメイン名ラベル＆申請フォームの表示を選択に合わせて更新
   const DLABEL = {
@@ -422,8 +456,8 @@ function generateResult() {
   meta.push({ new: 'ドメイン新規', transfer: 'ドメイン移管', external: '他社管理継続' }[state.domain]);
   meta.push({ none: 'メールなし', new: 'メール新規', continue: 'メール継続' }[state.mail]);
   if (state.oldsite === 'yes') meta.push('旧サイトあり');
-  if (state.redirect && state.redirect !== 'none') {
-    meta.push(state.redirect === 'self' ? 'リダイレクト自社' : 'リダイレクト他社依頼');
+  if (state.redirect === 'needed') {
+    meta.push('リダイレクト必要');
   }
   document.getElementById('result-meta').innerHTML = meta.map(m => `<span>● ${m}</span>`).join('');
 
@@ -499,7 +533,7 @@ function buildMarkdown() {
   md += `- ドメイン: ${ {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] }\n`;
   md += `- メール: ${ {none:'なし', new:'新規', continue:'既存継続'}[state.mail] }\n`;
   md += `- 旧サイト: ${ state.oldsite === 'yes' ? 'あり' : 'なし' }\n`;
-  if (state.redirect) md += `- リダイレクト: ${ {none:'不要', self:'自社対応', external:'他社依頼'}[state.redirect] }\n`;
+  if (state.redirect) md += `- リダイレクト: ${ {none:'不要', needed:'必要'}[state.redirect] }\n`;
   md += `\n`;
 
   const byCat = {};
@@ -525,6 +559,20 @@ function buildMarkdown() {
   // 新規取得の場合、取得申請情報セクションを追加
   if (state.domain === 'new') {
     md += buildOrgSection();
+  }
+
+  // リダイレクト必要の場合、制作会社情報セクションを追加
+  if (state.redirect === 'needed') {
+    syncRedirectFields();
+    const toolLabel = {
+      jimdoo: 'ジンドゥー', wix: 'Wix', wordpress: 'WordPress',
+      studio: 'STUDIO', amebaownd: 'Ameba Ownd', google: 'Googleサイト', other: 'その他・不明'
+    }[state.redirectTool] || state.redirectTool || '—';
+    md += `## リダイレクト情報\n\n`;
+    md += `| 項目 | 内容 |\n|------|------|\n`;
+    md += `| WEB制作会社 | ${state.redirectWebCompany || '—'} |\n`;
+    md += `| ドメイン管理会社 | ${state.redirectDomainCompany || '—'} |\n`;
+    md += `| HPツール | ${toolLabel} |\n\n`;
   }
 
   return md;
@@ -617,5 +665,8 @@ function resetAll() {
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
   document.getElementById('redirect-group').classList.add('hidden');
   document.getElementById('new-domain-form').classList.add('hidden');
+  const rdPanel2 = document.getElementById('s5-redirect-panel');
+  if (rdPanel2) rdPanel2.classList.add('hidden');
+  state.maxStep = 0;
   goStep(0);
 }
