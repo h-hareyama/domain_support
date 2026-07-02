@@ -59,7 +59,7 @@
     <div class="panel-head">
       <div class="eyebrow">Step 01 / 05</div>
       <h2>園の基本情報</h2>
-      <p class="desc">ディレクターが事前に把握している基本情報を入力してください。後から追記できます。</p>
+      <p class="desc">貴園のホームページ制作に必要な基本情報を入力してください。わからない項目は空欄のまま次に進んでいただいて構いません。</p>
     </div>
     <div class="form-grid full">
       <div class="field">
@@ -89,7 +89,7 @@
     <div class="panel-head">
       <div class="eyebrow">Step 02 / 05</div>
       <h2>ドメインはどうしますか？</h2>
-      <p class="desc">園のHPで使うURL（ドメイン）について、現在の状況を選んでください。</p>
+      <p class="desc">ホームページのURL（ドメイン）の管理方法について、現在の状況に一番近いものを選んでください。わからない場合はスマートエデュケーションの担当者にご確認ください。</p>
     </div>
     <div class="q-group">
       <div class="q-options">
@@ -97,21 +97,21 @@
           <input type="radio" name="domain" value="new">
           <div class="q-opt-body">
             <div class="q-opt-title">新規取得</div>
-            <div class="q-opt-desc">お名前.comで新しくドメインを取得する（例：<code class="inline">〇〇.ed.jp</code>）</div>
+            <div class="q-opt-desc">新しいURLを取得してホームページを公開する（はじめてHPを開設する場合など）</div>
           </div>
         </label>
         <label class="q-opt">
           <input type="radio" name="domain" value="transfer">
           <div class="q-opt-body">
             <div class="q-opt-title">移管（弊社管理に切り替え）</div>
-            <div class="q-opt-desc">既存のドメインをお名前.comへ移管して継続利用する</div>
+            <div class="q-opt-desc">現在のURLをそのまま引き継いで使う（URL管理をスマートエデュケーションに切り替える）</div>
           </div>
         </label>
         <label class="q-opt">
           <input type="radio" name="domain" value="external">
           <div class="q-opt-body">
             <div class="q-opt-title">他社管理を継続</div>
-            <div class="q-opt-desc">ドメインは旧管理会社のまま。AレコードだけAWSに向ける</div>
+            <div class="q-opt-desc">現在のURLをそのまま使い、URL管理会社も変更しない</div>
           </div>
         </label>
       </div>
@@ -127,7 +127,7 @@
     <div class="panel-head">
       <div class="eyebrow">Step 03 / 05</div>
       <h2>メールはどう使いますか？</h2>
-      <p class="desc"><code class="inline">info@〇〇.ed.jp</code> のような独自ドメインのメールについてです。</p>
+      <p class="desc">「info@〇〇.ed.jp」のように、HPと同じURLを使ったメールアドレスについてです。</p>
     </div>
     <div class="q-group">
       <div class="q-options">
@@ -135,21 +135,21 @@
           <input type="radio" name="mail" value="none">
           <div class="q-opt-body">
             <div class="q-opt-title">メールは使わない</div>
-            <div class="q-opt-desc">HPだけ公開する。独自ドメインのメールは不要</div>
+            <div class="q-opt-desc">HPのみを公開する。メールアドレスは作成しない</div>
           </div>
         </label>
         <label class="q-opt">
           <input type="radio" name="mail" value="new">
           <div class="q-opt-body">
             <div class="q-opt-title">新規でメールを始める</div>
-            <div class="q-opt-desc">これからメール運用を開始する（GWS for Education 等を案内）</div>
+            <div class="q-opt-desc">HPと同じURLのメールアドレスを新たに作成する（例：info@〇〇.ed.jp）</div>
           </div>
         </label>
         <label class="q-opt">
           <input type="radio" name="mail" value="continue">
           <div class="q-opt-body">
             <div class="q-opt-title">既存のメールをそのまま使う</div>
-            <div class="q-opt-desc">今使っているメールサービスを継続。MX/SPF を既存に向けたまま運用</div>
+            <div class="q-opt-desc">現在お使いのメールアドレスをそのまま継続して使う</div>
           </div>
         </label>
       </div>
@@ -165,7 +165,7 @@
     <div class="panel-head">
       <div class="eyebrow">Step 04 / 05</div>
       <h2>旧サイトはありますか？</h2>
-      <p class="desc">現在公開されている園のHPがある場合、リダイレクト要否の判定に使います。</p>
+      <p class="desc">現在すでに公開しているホームページがある場合は「あり」を選んでください。</p>
     </div>
     <div class="q-group">
       <div class="q-options">
@@ -173,20 +173,20 @@
           <input type="radio" name="oldsite" value="yes">
           <div class="q-opt-body">
             <div class="q-opt-title">あり</div>
-            <div class="q-opt-desc">既存のHPがある</div>
+            <div class="q-opt-desc">現在公開しているHPがある</div>
           </div>
         </label>
         <label class="q-opt">
           <input type="radio" name="oldsite" value="no">
           <div class="q-opt-body">
             <div class="q-opt-title">なし</div>
-            <div class="q-opt-desc">新規開設。リダイレクトは不要</div>
+            <div class="q-opt-desc">はじめてHPを公開する</div>
           </div>
         </label>
       </div>
     </div>
     <div class="q-group hidden" id="redirect-group">
-      <label class="q-label">旧サイト → 新サイトへのリダイレクトは必要ですか？</label>
+      <label class="q-label">古いHPのURLから新しいHPへの「転送設定」はご希望ですか？</label>
       <span class="q-hint">古いURLにアクセスした人を新しいHPへ自動で案内する「転送設定」のことです</span>
       <div class="q-options">
         <label class="q-opt">
@@ -224,7 +224,7 @@
     <div class="panel" id="s5-domain-panel" style="margin:20px 0">
       <div class="panel-head">
         <div class="eyebrow">ドメイン情報の入力</div>
-        <p class="desc" style="margin:4px 0 0">選択内容に応じて必要なドメイン情報を入力してください。</p>
+        <p class="desc" style="margin:4px 0 0">以下の情報は、ご担当の方に確認しながら入力してください。わからない項目はスマートエデュケーション担当者にお問い合わせいただいて構いません。</p>
       </div>
       <div class="form-grid full" style="margin-top:16px">
         <div class="field">
