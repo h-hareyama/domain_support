@@ -381,9 +381,7 @@ header.brand .meta {
 }
 
 .ask-item {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 10px;
+  display: block;
   padding: 12px 0;
   border-bottom: 1px dashed var(--line);
 }
@@ -718,3 +716,4 @@ code.inline {
   font-family: "SF Mono", Monaco, "Courier New", monospace;
   color: var(--brand-dark);
 }
+                                               
