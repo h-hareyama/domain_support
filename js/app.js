@@ -181,6 +181,8 @@ const ORG_FIELD_MAP = [
 ];
 
 function syncOrgFields() {
+  const dnEl = document.getElementById('domain-name');
+  if (dnEl) state.domainName = dnEl.value.trim();
   ORG_FIELD_MAP.forEach(([key, id]) => {
     const el = document.getElementById(id);
     if (el) state[key] = el.value.trim();
@@ -288,8 +290,6 @@ function goStep(n) {
     const d = document.querySelector('input[name="domain"]:checked');
     if (!d) { showToast('ドメインの扱いを選択してください', 'error'); return; }
     state.domain = d.value;
-    // 新規取得の場合、フォーム値をstateに同期
-    if (state.domain === 'new') syncOrgFields();
   }
   if (n === 3) {
     const m = document.querySelector('input[name="mail"]:checked');
@@ -348,24 +348,8 @@ async function lookupPostal(digits, targetId) {
 
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // ドメイン選択時：ラベル切り替え＋新規フォーム表示制御
-  const DOMAIN_LABEL = {
-    new:      { label: '希望ドメイン名',   hint: '希望する候補をわかる範囲で入力してください' },
-    transfer: { label: '現在のドメイン名', hint: '移管元の既存ドメインを入力してください' },
-    external: { label: '現在のドメイン名', hint: '現在使用中のドメインを入力してください' },
-  };
-  document.querySelectorAll('input[name="domain"]').forEach(el => {
-    el.addEventListener('change', () => {
-      const form  = document.getElementById('new-domain-form');
-      const lbl   = document.getElementById('domain-name-label');
-      const hint  = document.getElementById('domain-name-hint');
-      const map   = DOMAIN_LABEL[el.value] || {};
-      if (lbl)  lbl.textContent  = map.label || '希望ドメイン名 / 現在のドメイン名';
-      if (hint) hint.textContent = map.hint  || 'わかる範囲でOK';
-      if (el.value === 'new') form.classList.remove('hidden');
-      else form.classList.add('hidden');
-    });
-  });
+  // ドメイン選択ラジオ：状態は goStep() で取得、詳細入力は結果シートで表示するため
+  // ここでは UI 更新なし
 
   // 旧サイトあり選択時のサブ質問表示
   document.querySelectorAll('input[name="oldsite"]').forEach(el => {
@@ -410,6 +394,23 @@ function generateResult() {
 
   const risk = calcRisk(state);
   const pid = patternId(state);
+
+  // ドメイン名ラベル＆申請フォームの表示を選択に合わせて更新
+  const DLABEL = {
+    new:      { label: '希望ドメイン名',   hint: '第1〜第3希望を入力してください（複数ある場合はカンマ区切りでOK）' },
+    transfer: { label: '現在のドメイン名', hint: '移管元の既存ドメインを入力してください' },
+    external: { label: '現在のドメイン名', hint: '現在使用中のドメインを入力してください' },
+  };
+  const dlmap = DLABEL[state.domain] || {};
+  const dlbl  = document.getElementById('domain-name-label');
+  const dhint = document.getElementById('domain-name-hint');
+  if (dlbl)  dlbl.textContent  = dlmap.label || '希望ドメイン名 / 現在のドメイン名';
+  if (dhint) dhint.textContent = dlmap.hint  || 'わかる範囲でOK';
+  const ndf = document.getElementById('new-domain-form');
+  if (ndf) {
+    if (state.domain === 'new') ndf.classList.remove('hidden');
+    else ndf.classList.add('hidden');
+  }
 
   // ヘッダー部分
   document.getElementById('result-garden-name').textContent =
@@ -478,7 +479,9 @@ function toggleCheck(qid, el) {
 // 出力機能
 // ═══════════════════════════════════════════
 function buildMarkdown() {
-  // 新規取得フォームの値を最新化
+  // フォーム値を最新化（domainName は常に、org情報は新規取得時のみ）
+  const dnEl2 = document.getElementById('domain-name');
+  if (dnEl2) state.domainName = dnEl2.value.trim();
   if (state.domain === 'new') syncOrgFields();
 
   const risk = calcRisk(state);
