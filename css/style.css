@@ -764,4 +764,16 @@ header.brand .meta {
 
 
 /* ── 見出しフォント（Zen Maru Gothic） ── */
-h1, h2, h3, .q-opt-title, .new-domain-title, .sec
+h1, h2, h3, .q-opt-title, .new-domain-title, .section-title {
+  font-family: "Zen Maru Gothic", "Noto Sans JP", "Hiragino Sans", sans-serif;
+}
+.hidden { display: none !important; }
+
+code.inline {
+  background: #EBF5FB;
+  padding: 1px 6px;
+  font-size: 12px;
+  border-radius: 3px;
+  font-family: "SF Mono", Monaco, "Courier New", monospace;
+  color: var(--brand-dark);
+}
