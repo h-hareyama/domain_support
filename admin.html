@@ -75,7 +75,6 @@
       .memo-textarea{width:100%;min-height:72px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:#fff;color:var(--ink);box-sizing:border-box}
       .memo-textarea:focus{outline:none;border-color:var(--brand)}
       .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
-      .empty-state .icon{font-size:48px;margin-bottom:12px}
       .loading{text-align:center;padding:40px;color:var(--muted)}
       .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:12px 24px;border-radius:50px;font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:999;white-space:nowrap}
       .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -132,4 +131,16 @@
           <input type="text" id="filter-search" placeholder="園名で検索..." />
         </div>
         <div id="list-container">
-          <div class="loading
+          <div class="loading">読み込み中...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
+</html>
