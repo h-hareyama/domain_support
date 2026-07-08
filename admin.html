@@ -431,6 +431,11 @@
       // ── 認証状態監視 ──
       auth.onAuthStateChanged(user => {
         if (user) {
+          if (!user.email.endsWith('@smarteducation.jp')) {
+            auth.signOut();
+            showToast('@smarteducation.jp のアカウントでログインしてください', 'error');
+            return;
+          }
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('admin-screen').style.display = 'block';
           document.getElementById('user-name').textContent = user.email;
@@ -643,12 +648,4 @@
       // ── トースト ──
       let toastTimer;
       function showToast(msg, type='info') {
-        const el = document.getElementById('toast');
-        el.textContent = msg;
-        el.className = `toast ${type} show`;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
-      }
-    </script>
-  </body>
-</html>
+        const el = document.getElementById('toast'
