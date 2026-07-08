@@ -15,6 +15,16 @@ var db   = firebase.firestore();
 
 var allSubmissions = [];
 
+// ── リダイレクト結果を処理 ──
+auth.getRedirectResult().then(function(result) {
+  if (result && result.user) {
+    console.log('redirect login ok:', result.user.email);
+  }
+}).catch(function(err) {
+  console.error('redirect error:', err.code, err.message);
+  showToast('ログインに失敗しました: ' + err.message, 'error');
+});
+
 // ── 認証状態監視 ──
 auth.onAuthStateChanged(function(user) {
   if (user) {
@@ -232,16 +242,4 @@ var QID_LABELS = {
   'q-old-1':     '旧サイトURL',
   'q-old-2':     '旧サイト公開先サービス',
   'q-old-3':     '旧サイト管理会社',
-  'q-old-4':     '旧サイト維持期間',
-};
-
-// ── トースト ──
-var toastTimer;
-function showToast(msg, type) {
-  type = type || 'info';
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast ' + type + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3000);
-}
+  'q-old-4':    
