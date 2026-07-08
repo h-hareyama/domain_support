@@ -1,4 +1,4 @@
-// ── Firebase 初期化 ──
+// -- Firebase 初期化 --
 var firebaseConfig = {
   apiKey: "AIzaSyCtHBzancsl1AfyTE0w7deORYMTGFfLE_w",
   authDomain: "domain-support-54f55.firebaseapp.com",
@@ -15,7 +15,7 @@ var db   = firebase.firestore();
 
 var allSubmissions = [];
 
-// ── リダイレクト結果を処理 ──
+// -- リダイレクト結果を処理 --
 auth.getRedirectResult().then(function(result) {
   if (result && result.user) {
     console.log('redirect login ok:', result.user.email);
@@ -25,7 +25,7 @@ auth.getRedirectResult().then(function(result) {
   showToast('ログインに失敗しました: ' + err.message, 'error');
 });
 
-// ── 認証状態監視 ──
+// -- 認証状態監視 --
 auth.onAuthStateChanged(function(user) {
   if (user) {
     if (!user.email.endsWith('@smarteducation.jp')) {
@@ -43,7 +43,7 @@ auth.onAuthStateChanged(function(user) {
   }
 });
 
-// ── サインイン/アウト ──
+// -- サインイン/アウト --
 function signIn() {
   var provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithRedirect(provider);
@@ -52,10 +52,9 @@ function signOut() {
   auth.signOut();
 }
 
-// ログインボタン
 document.getElementById('login-btn').addEventListener('click', signIn);
 
-// ── データ取得 ──
+// -- データ取得 --
 function loadSubmissions() {
   document.getElementById('list-container').innerHTML = '<div class="loading">読み込み中...</div>';
   db.collection('submissions')
@@ -67,11 +66,11 @@ function loadSubmissions() {
     })
     .catch(function() {
       document.getElementById('list-container').innerHTML =
-        '<div class="empty-state"><div class="icon">⚠️</div><p>データの取得に失敗しました</p></div>';
+        '<div class="empty-state"><p>データの取得に失敗しました</p></div>';
     });
 }
 
-// ── フィルター ──
+// -- フィルター --
 function applyFilter() {
   var status = document.getElementById('filter-status').value;
   var risk   = document.getElementById('filter-risk').value;
@@ -85,12 +84,12 @@ function applyFilter() {
   renderList(filtered);
 }
 
-// ── レンダリング ──
+// -- レンダリング --
 function renderList(submissions) {
   document.getElementById('count-badge').textContent = submissions.length + '件';
   var container = document.getElementById('list-container');
   if (submissions.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>該当する提出データがありません</p></div>';
+    container.innerHTML = '<div class="empty-state"><p>該当する提出データがありません</p></div>';
     return;
   }
   container.innerHTML = '<div class="submission-list">' +
@@ -99,7 +98,7 @@ function renderList(submissions) {
 }
 
 function renderCard(s) {
-  var date = s.submittedAt ? s.submittedAt.toDate().toLocaleDateString('ja-JP') : '—';
+  var date = s.submittedAt ? s.submittedAt.toDate().toLocaleDateString('ja-JP') : '-';
   var riskClass   = 'risk-' + (s.riskLevel || 'low');
   var statusClass = s.status || 'pending';
   var answers = s.answers || {};
@@ -110,34 +109,34 @@ function renderCard(s) {
     return '<div class="answer-item"><span class="q">' + label + '</span><span class="a">' + ans + '</span></div>';
   }).filter(Boolean).join('');
 
-  var sel = function(v) {
+  var sel = function() {
     return [
       '<option value="pending"'     + (s.status==='pending'     ? ' selected' : '') + '>未対応</option>',
       '<option value="in_progress"' + (s.status==='in_progress' ? ' selected' : '') + '>対応中</option>',
-      '<option value="done"'        + (s.status==='done'        ? ' selected' : '') + '>完了</option>',
+      '<option value="done"'        + (s.status==='done'        ? ' selected' : '') + '>完了</option>'
     ].join('');
   };
 
   return '<div class="card status-' + statusClass + '" id="card-' + s.id + '">' +
     '<div class="card-header" onclick="toggleDetail(\'' + s.id + '\')">' +
-      '<div class="garden-name">' + (s.gardenName || '（未入力）') + '</div>' +
+      '<div class="garden-name">' + (s.gardenName || '(未入力)') + '</div>' +
       '<div class="card-meta">' +
         '<span class="meta-tag">提出: ' + date + '</span>' +
-        '<span class="meta-tag">' + (s.domainLabel || s.domain || '—') + '</span>' +
-        '<span class="meta-tag">メール: ' + (s.mailLabel || s.mail || '—') + '</span>' +
-        '<span class="meta-tag">担当: ' + (s.directorName || '—') + '</span>' +
-        '<span class="meta-tag">公開希望: ' + (s.publishDate || '—') + '</span>' +
-        '<span class="risk-tag ' + riskClass + '">' + (s.riskLabel || '—') + '</span>' +
+        '<span class="meta-tag">' + (s.domainLabel || s.domain || '-') + '</span>' +
+        '<span class="meta-tag">メール: ' + (s.mailLabel || s.mail || '-') + '</span>' +
+        '<span class="meta-tag">担当: ' + (s.directorName || '-') + '</span>' +
+        '<span class="meta-tag">公開希望: ' + (s.publishDate || '-') + '</span>' +
+        '<span class="risk-tag ' + riskClass + '">' + (s.riskLabel || '-') + '</span>' +
       '</div>' +
       '<select class="status-select ' + statusClass + '" onclick="event.stopPropagation()" onchange="updateStatus(\'' + s.id + '\', this)">' +
         sel() +
       '</select>' +
-      '<span class="toggle-icon" id="icon-' + s.id + '">▼</span>' +
+      '<span class="toggle-icon" id="icon-' + s.id + '">v</span>' +
     '</div>' +
     '<div class="card-detail" id="detail-' + s.id + '">' +
       '<div class="detail-grid">' +
-        '<div class="detail-row"><div class="label">パターンID</div><div class="value">' + (s.patternId || '—') + '</div></div>' +
-        '<div class="detail-row"><div class="label">ドメイン名</div><div class="value">' + (s.domainName || '—') + '</div></div>' +
+        '<div class="detail-row"><div class="label">パターンID</div><div class="value">' + (s.patternId || '-') + '</div></div>' +
+        '<div class="detail-row"><div class="label">ドメイン名</div><div class="value">' + (s.domainName || '-') + '</div></div>' +
         '<div class="detail-row"><div class="label">旧サイト</div><div class="value">' + (s.oldsite === 'yes' ? 'あり' : 'なし') + '</div></div>' +
         '<div class="detail-row"><div class="label">リダイレクト</div><div class="value">' + (s.redirect === 'needed' ? '必要' : '不要') + '</div></div>' +
       '</div>' +
@@ -150,10 +149,10 @@ function toggleDetail(id) {
   var detail = document.getElementById('detail-' + id);
   var icon   = document.getElementById('icon-' + id);
   var isOpen = detail.classList.toggle('open');
-  icon.textContent = isOpen ? '▲' : '▼';
+  icon.textContent = isOpen ? '^' : 'v';
 }
 
-// ── ステータス更新 ──
+// -- ステータス更新 --
 function updateStatus(id, selectEl) {
   var newStatus = selectEl.value;
   var card = document.getElementById('card-' + id);
@@ -171,7 +170,7 @@ function updateStatus(id, selectEl) {
   });
 }
 
-// ── CSV出力 ──
+// -- CSV出力 --
 function exportCSV() {
   var filtered = getFiltered();
   if (filtered.length === 0) { showToast('出力するデータがありません', 'error'); return; }
@@ -219,7 +218,7 @@ function getFiltered() {
   });
 }
 
-// ── 質問ID → ラベル対応表 ──
+// -- 質問ID -> ラベル対応表 --
 var QID_LABELS = {
   'q-www':       'URLにwwwを付けるか',
   'q-newdom-1':  '希望ドメイン候補',
@@ -242,4 +241,24 @@ var QID_LABELS = {
   'q-old-1':     '旧サイトURL',
   'q-old-2':     '旧サイト公開先サービス',
   'q-old-3':     '旧サイト管理会社',
-  'q-old-4':    
+  'q-old-4':     '旧サイト維持期間'
+};
+
+// -- フィルター・ボタンのイベント --
+document.getElementById('logout-btn').addEventListener('click', signOut);
+document.getElementById('csv-btn').addEventListener('click', exportCSV);
+document.getElementById('reload-btn').addEventListener('click', loadSubmissions);
+document.getElementById('filter-status').addEventListener('change', applyFilter);
+document.getElementById('filter-risk').addEventListener('change', applyFilter);
+document.getElementById('filter-search').addEventListener('input', applyFilter);
+
+// -- トースト --
+var toastTimer;
+function showToast(msg, type) {
+  type = type || 'info';
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
