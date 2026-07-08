@@ -46,7 +46,15 @@ auth.onAuthStateChanged(function(user) {
 // -- サインイン/アウト --
 function signIn() {
   var provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider);
+  auth.signInWithPopup(provider).catch(function(err) {
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+      // ポップアップがブロックされた場合はリダイレクトにフォールバック
+      auth.signInWithRedirect(provider);
+    } else if (err.code !== 'auth/cancelled-popup-request') {
+      console.error('login error:', err.code, err.message);
+      showToast('ログインに失敗しました: ' + err.code, 'error');
+    }
+  });
 }
 function signOut() {
   auth.signOut();
@@ -249,16 +257,4 @@ document.getElementById('logout-btn').addEventListener('click', signOut);
 document.getElementById('csv-btn').addEventListener('click', exportCSV);
 document.getElementById('reload-btn').addEventListener('click', loadSubmissions);
 document.getElementById('filter-status').addEventListener('change', applyFilter);
-document.getElementById('filter-risk').addEventListener('change', applyFilter);
-document.getElementById('filter-search').addEventListener('input', applyFilter);
-
-// -- トースト --
-var toastTimer;
-function showToast(msg, type) {
-  type = type || 'info';
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast ' + type + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3000);
-}
+document.getEleme
