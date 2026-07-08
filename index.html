@@ -549,4 +549,161 @@
                   >登記年月日（西暦）
                   <span class="badge badge-required">必須</span></label
                 >
-                <input type="date" id="new-reg-date
+                <input type="date" id="new-reg-date" />
+              </div>
+              <div class="field">
+                <label
+                  >登記地住所 <span class="badge badge-required">必須</span>
+                  <button
+                    type="button"
+                    class="btn-same-addr"
+                    onclick="
+                      document.getElementById('new-reg-address').value =
+                        document.getElementById('new-address').value
+                    "
+                  >
+                    上と同じ住所
+                  </button></label
+                >
+                <input
+                  type="text"
+                  id="new-reg-address"
+                  placeholder="例：東京都品川区西五反田3-11-6"
+                />
+              </div>
+            </div>
+            <div class="form-grid" style="margin-top: 12px">
+              <div class="field">
+                <label
+                  >代表者氏名
+                  <span class="badge badge-required">必須</span></label
+                >
+                <input
+                  type="text"
+                  id="new-rep-name"
+                  placeholder="例：田中 歩路茂"
+                />
+              </div>
+              <div class="field">
+                <label
+                  >代表者氏名（ローマ字）
+                  <span class="badge badge-required">必須</span></label
+                >
+                <input
+                  type="text"
+                  id="new-rep-roman"
+                  placeholder="例：TANAKA PUROMO"
+                />
+              </div>
+            </div>
+            <div class="form-grid full" style="margin-top: 12px">
+              <div class="field">
+                <label
+                  >代表者役職
+                  <span class="badge badge-required">必須</span></label
+                >
+                <input type="text" id="new-rep-title" placeholder="例：園長" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- リダイレクト情報入力（リダイレクト必要の場合のみ表示） -->
+        <div class="panel hidden" id="s5-redirect-panel" style="margin: 20px 0">
+          <div class="panel-head">
+            <div class="eyebrow">リダイレクト情報</div>
+            <p class="desc" style="margin: 4px 0 0">
+              旧HPからの転送設定のために必要な情報です。わかる範囲で入力してください。
+            </p>
+          </div>
+          <div class="form-grid" style="margin-top: 16px">
+            <div class="field">
+              <label
+                >現在のWEB制作会社
+                <span class="badge badge-optional">わかれば</span></label
+              >
+              <span class="hint">旧HPを作った会社・サービス名</span>
+              <input
+                type="text"
+                id="redirect-web-company"
+                placeholder="例：〇〇株式会社"
+              />
+            </div>
+            <div class="field">
+              <label
+                >ドメイン管理会社
+                <span class="badge badge-optional">わかれば</span></label
+              >
+              <span class="hint">現在ドメインを管理している会社・サービス</span>
+              <input
+                type="text"
+                id="redirect-domain-company"
+                placeholder="例：〇〇株式会社"
+              />
+            </div>
+          </div>
+          <div class="form-grid full" style="margin-top: 12px">
+            <div class="field">
+              <label
+                >旧HPを作ったツール・サービス
+                <span class="badge badge-optional">わかれば</span></label
+              >
+              <span class="hint">リダイレクト設定の可否に影響します</span>
+              <select id="redirect-tool">
+                <option value="">わからない場合は空欄でOK</option>
+                <option value="jimdoo">ジンドゥー (Jimdo)</option>
+                <option value="wix">Wix</option>
+                <option value="wordpress">WordPress</option>
+                <option value="studio">STUDIO</option>
+                <option value="amebaownd">Ameba Ownd</option>
+                <option value="google">Googleサイト</option>
+                <option value="other">その他・不明</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-body" id="result-body"></div>
+
+        <div class="actions">
+          <!-- 登録ボタン -->
+          <div class="submit-area">
+            <button class="btn btn-submit" id="submit-btn" onclick="submitToFirestore()">
+              この内容で登録する
+            </button>
+            <p class="submit-hint">登録するとスマートエデュケーション担当者に通知されます</p>
+          </div>
+
+          <h3 style="margin-top: 24px">ファイル出力・共有</h3>
+          <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="copyAsMarkdown()">
+              Markdownでコピー
+            </button>
+            <button class="btn btn-secondary" onclick="downloadAsText()">
+              テキストで保存
+            </button>
+            <button class="btn btn-secondary" onclick="window.print()">
+              印刷・PDF保存
+            </button>
+            <button class="btn btn-secondary" onclick="sendSlack()">
+              文面をコピー
+            </button>
+          </div>
+          <div class="nav" style="margin-top: 16px">
+            <button class="btn btn-secondary" onclick="goStep(3)">
+              ← 質問に戻る
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /.app -->
+
+    <div id="toast" class="toast"></div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

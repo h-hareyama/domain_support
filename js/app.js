@@ -3,6 +3,78 @@
  * ═══════════════════════════════════════════ */
 
 // ═══════════════════════════════════════════
+// Firebase 設定・初期化
+// ═══════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCtHBzancsl1AfyTE0w7deORYMTGFfLE_w",
+  authDomain: "domain-support-54f55.firebaseapp.com",
+  projectId: "domain-support-54f55",
+  storageBucket: "domain-support-54f55.firebasestorage.app",
+  messagingSenderId: "1017898228058",
+  appId: "1:1017898228058:web:b8847317ef1ae19cc07b63",
+  measurementId: "G-X9L9MPZJN0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ═══════════════════════════════════════════
+// Firestore 登録
+// ═══════════════════════════════════════════
+async function submitToFirestore() {
+  syncAnswersFromDOM();
+
+  if (!state.gardenName) {
+    showToast('園名を入力してください（Step 01）', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '登録中...';
+
+  const risk = calcRisk(state);
+  const pid  = patternId(state);
+  const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
+  const mailLabel   = {none:'なし', new:'新規', continue:'既存継続'}[state.mail] || '—';
+
+  const payload = {
+    gardenName:    state.gardenName,
+    directorName:  state.directorName,
+    publishDate:   state.publishDate,
+    domainName:    state.domainName,
+    patternId:     pid,
+    riskLevel:     risk.level,
+    riskLabel:     risk.label,
+    domain:        state.domain,
+    domainLabel:   domainLabel,
+    mail:          state.mail,
+    mailLabel:     mailLabel,
+    oldsite:       state.oldsite,
+    redirect:      state.redirect,
+    answers:       state.answers,
+    status:        'pending',
+    submittedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:     firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    const docRef = await db.collection('submissions').add(payload);
+    showToast('登録しました！担当者に通知されます', 'success');
+    btn.textContent = '登録済み ✓';
+    btn.style.background = 'var(--ok)';
+    console.log('登録ID:', docRef.id);
+  } catch (err) {
+    console.error(err);
+    showToast('登録に失敗しました。時間をおいて再度お試しください', 'error');
+    btn.disabled = false;
+    btn.textContent = 'この内容で登録する';
+  }
+}
+
+
+
+// ═══════════════════════════════════════════
 // 状態管理
 // ═══════════════════════════════════════════
 const state = {

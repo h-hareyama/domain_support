@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理画面 | HP公開準備フォーム</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f4f2ee;
+        --panel: #fffef9;
+        --ink: #333;
+        --muted: #64748b;
+        --line: #e8e3db;
+        --brand: #197fc5;
+        --brand-dark: #0f6baa;
+        --brand-pale: #e7eff7;
+        --brand-2: #f28700;
+        --ok: #047857;
+        --ok-pale: #d1fae5;
+        --warn: #b45309;
+        --warn-pale: #fef3c7;
+        --danger: #ef3232;
+        --danger-pale: #fee2e2;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0;
+        background: var(--bg);
+        font-family: "Noto Sans JP", "Hiragino Sans", sans-serif;
+        font-size: 14px;
+        color: var(--ink);
+        line-height: 1.6;
+      }
+
+      /* ── ヘッダー ── */
+      header {
+        background: var(--brand);
+        color: #fff;
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      }
+      header .logo {
+        background: var(--brand-2);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-family: "Zen Maru Gothic", sans-serif;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        font-family: "Zen Maru Gothic", sans-serif;
+      }
+      header .spacer { flex: 1; }
+      header .user-info {
+        font-size: 12px;
+        opacity: 0.85;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .btn-logout {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.4);
+        color: #fff;
+        padding: 5px 14px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: inherit;
+      }
+      .btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+      /* ── ログイン画面 ── */
+      #login-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .login-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 48px;
+        text-align: center;
+        width: 360px;
+        box-shadow: 0 4px 24px rgba(100,80,40,0.1);
+      }
+      .login-card h2 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-family: "Zen Maru Gothic", sans-serif;
+        color: var(--brand);
+      }
+      .login-card p {
+        margin: 0 0 28px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .btn-google {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1.5px solid var(--line);
+        border-radius: 50px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: 0.15s;
+      }
+      .btn-google:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-1px); }
+      .btn-google svg { width: 20px; height: 20px; }
+
+      /* ── メイン ── */
+      #admin-screen { display: none; }
+      .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+
+      /* ── ツールバー ── */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .toolbar h2 {
+        margin: 0;
+        font-size: 20px;
+        font-family: "Zen Maru Gothic", sans-serif;
+        flex: 1;
+      }
+      .count-badge {
+        background: var(--brand-pale);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 50px;
+      }
+      .btn {
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: 0.15s;
+      }
+      .btn-primary { background: var(--brand); color: #fff; }
+      .btn-primary:hover { background: var(--brand-dark); }
+      .btn-outline {
+        background: transparent;
+        border: 1.5px solid var(--brand);
+        color: var(--brand);
+      }
+      .btn-outline:hover { background: var(--brand-pale); }
+
+      /* フィルター */
+      .filter-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .filter-bar select, .filter-bar input {
+        padding: 7px 12px;
+        border: 1.5px solid var(--line);
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        background: #fff;
+      }
+      .filter-bar select:focus, .filter-bar input:focus {
+        outline: none;
+        border-color: var(--brand);
+      }
+
+      /* ── カード一覧 ── */
+      .submission-list { display: flex; flex-direction: column; gap: 10px; }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 6px rgba(100,80,40,0.06);
+        position: relative;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+      }
+      .card.status-pending::before { background: var(--warn); }
+      .card.status-in_progress::before { background: var(--brand); }
+      .card.status-done::before { background: var(--ok); }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px 14px 22px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .card-header:hover { background: #faf8f5; }
+
+      .garden-name {
+        font-size: 16px;
+        font-weight: 700;
+        font-family: "Zen Maru Gothic", sans-serif;
+        min-width: 180px;
+      }
+      .card-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        flex: 1;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .meta-tag {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 2px 8px;
+      }
+      .risk-tag {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .risk-high { background: #fee2e2; color: var(--danger); }
+      .risk-mid  { background: #fef3c7; color: var(--warn); }
+      .risk-low  { background: #d1fae5; color: var(--ok); }
+
+      .status-select {
+        padding: 5px 10px;
+        border: 1.5px solid var(--line);
+        border-radius: 8px;
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .status-select.pending    { border-color: var(--warn); color: var(--warn); }
+      .status-select.in_progress{ border-color: var(--brand); color: var(--brand); }
+      .status-select.done       { border-color: var(--ok); color: var(--ok); }
+
+      .toggle-icon { font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+      /* 詳細 */
+      .card-detail {
+        display: none;
+        padding: 0 22px 18px;
+        border-top: 1px solid var(--line);
+      }
+      .card-detail.open { display: block; }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 24px;
+        margin: 14px 0;
+      }
+      .detail-row { font-size: 13px; }
+      .detail-row .label { color: var(--muted); font-size: 11px; margin-bottom: 2px; }
+      .detail-row .value { font-weight: 600; }
+
+      .answers-section { margin-top: 14px; }
+      .answers-section h4 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--brand-2);
+        letter-spacing: 0.05em;
+        font-family: "Zen Maru Gothic", sans-serif;
+      }
+      .answer-item {
+        display: flex;
+        gap: 12px;
+        padding: 8px 12px;
+        background: var(--bg);
+        border-radius: 6px;
+        margin-bottom: 6px;
+        font-size: 13px;
+      }
+      .answer-item .q { color: var(--muted); min-width: 160px; flex-shrink: 0; }
+      .answer-item .a { font-weight: 600; }
+
+      /* ── 空状態 ── */
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+      }
+      .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+      /* ── ローディング ── */
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--muted);
+      }
+
+      /* ── トースト ── */
+      .toast {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: #1e293b;
+        color: #fff;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 700;
+        opacity: 0;
+        transition: 0.3s;
+        z-index: 999;
+        white-space: nowrap;
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .toast.success { background: #047857; }
+      .toast.error   { background: #dc2626; }
+    </style>
+  </head>
+  <body>
+
+    <!-- ログイン画面 -->
+    <div id="login-screen">
+      <div class="login-card">
+        <h2>管理画面</h2>
+        <p>スマートエデュケーション<br>HP公開準備フォーム</p>
+        <button class="btn-google" onclick="signIn()">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Googleでログイン
+        </button>
+      </div>
+    </div>
+
+    <!-- 管理画面 -->
+    <div id="admin-screen">
+      <header>
+        <span class="logo">スマートエデュケーション</span>
+        <h1>HP公開準備フォーム 管理画面</h1>
+        <span class="spacer"></span>
+        <div class="user-info">
+          <span id="user-name"></span>
+          <button class="btn-logout" onclick="signOut()">ログアウト</button>
+        </div>
+      </header>
+
+      <div class="container">
+        <div class="toolbar">
+          <h2>提出一覧 <span class="count-badge" id="count-badge">0件</span></h2>
+          <button class="btn btn-outline" onclick="exportCSV()">CSV出力</button>
+          <button class="btn btn-primary" onclick="loadSubmissions()">更新</button>
+        </div>
+
+        <div class="filter-bar">
+          <select id="filter-status" onchange="applyFilter()">
+            <option value="">すべてのステータス</option>
+            <option value="pending">未対応</option>
+            <option value="in_progress">対応中</option>
+            <option value="done">完了</option>
+          </select>
+          <select id="filter-risk" onchange="applyFilter()">
+            <option value="">すべてのリスク</option>
+            <option value="high">高</option>
+            <option value="mid">中</option>
+            <option value="low">低</option>
+          </select>
+          <input type="text" id="filter-search" placeholder="園名で検索..." oninput="applyFilter()" />
+        </div>
+
+        <div id="list-container">
+          <div class="loading">読み込み中...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      // ── Firebase 初期化 ──
+      const firebaseConfig = {
+        apiKey: "AIzaSyCtHBzancsl1AfyTE0w7deORYMTGFfLE_w",
+        authDomain: "domain-support-54f55.firebaseapp.com",
+        projectId: "domain-support-54f55",
+        storageBucket: "domain-support-54f55.firebasestorage.app",
+        messagingSenderId: "1017898228058",
+        appId: "1:1017898228058:web:b8847317ef1ae19cc07b63",
+        measurementId: "G-X9L9MPZJN0"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db   = firebase.firestore();
+
+      let allSubmissions = [];
+
+      // ── 認証状態監視 ──
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('admin-screen').style.display = 'block';
+          document.getElementById('user-name').textContent = user.email;
+          loadSubmissions();
+        } else {
+          document.getElementById('login-screen').style.display = 'flex';
+          document.getElementById('admin-screen').style.display = 'none';
+        }
+      });
+
+      function signIn() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(err => {
+          showToast('ログインに失敗しました: ' + err.message, 'error');
+        });
+      }
+      function signOut() {
+        auth.signOut();
+      }
+
+      // ── データ取得 ──
+      async function loadSubmissions() {
+        document.getElementById('list-container').innerHTML = '<div class="loading">読み込み中...</div>';
+        try {
+          const snap = await db.collection('submissions')
+            .orderBy('submittedAt', 'desc')
+            .get();
+          allSubmissions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          applyFilter();
+        } catch (err) {
+          document.getElementById('list-container').innerHTML =
+            '<div class="empty-state"><div class="icon">⚠️</div><p>データの取得に失敗しました</p></div>';
+        }
+      }
+
+      // ── フィルター ──
+      function applyFilter() {
+        const status = document.getElementById('filter-status').value;
+        const risk   = document.getElementById('filter-risk').value;
+        const search = document.getElementById('filter-search').value.toLowerCase();
+
+        let filtered = allSubmissions.filter(s => {
+          if (status && s.status !== status) return false;
+          if (risk   && s.riskLevel !== risk) return false;
+          if (search && !(s.gardenName || '').toLowerCase().includes(search)) return false;
+          return true;
+        });
+        renderList(filtered);
+      }
+
+      // ── レンダリング ──
+      function renderList(submissions) {
+        document.getElementById('count-badge').textContent = submissions.length + '件';
+        const container = document.getElementById('list-container');
+        if (submissions.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>該当する提出データがありません</p></div>';
+          return;
+        }
+        container.innerHTML = '<div class="submission-list">' +
+          submissions.map(s => renderCard(s)).join('') +
+          '</div>';
+      }
+
+      function renderCard(s) {
+        const date = s.submittedAt ? s.submittedAt.toDate().toLocaleDateString('ja-JP') : '—';
+        const statusLabel = { pending: '未対応', in_progress: '対応中', done: '完了' }[s.status] || s.status;
+        const riskClass = 'risk-' + (s.riskLevel || 'low');
+        const statusClass = s.status || 'pending';
+
+        const answers = s.answers || {};
+        const answerHtml = Object.entries(answers).map(([qid, ans]) => {
+          if (!ans) return '';
+          const label = QID_LABELS[qid] || qid;
+          return `<div class="answer-item"><span class="q">${label}</span><span class="a">${ans}</span></div>`;
+        }).filter(Boolean).join('');
+
+        return `
+          <div class="card status-${statusClass}" id="card-${s.id}">
+            <div class="card-header" onclick="toggleDetail('${s.id}')">
+              <div class="garden-name">${s.gardenName || '（未入力）'}</div>
+              <div class="card-meta">
+                <span class="meta-tag">提出: ${date}</span>
+                <span class="meta-tag">${s.domainLabel || s.domain || '—'}</span>
+                <span class="meta-tag">メール: ${s.mailLabel || s.mail || '—'}</span>
+                <span class="meta-tag">担当: ${s.directorName || '—'}</span>
+                <span class="meta-tag">公開希望: ${s.publishDate || '—'}</span>
+                <span class="risk-tag ${riskClass}">${s.riskLabel || '—'}</span>
+              </div>
+              <select class="status-select ${statusClass}" onclick="event.stopPropagation()"
+                onchange="updateStatus('${s.id}', this)">
+                <option value="pending"    ${s.status==='pending'    ? 'selected':''}>未対応</option>
+                <option value="in_progress"${s.status==='in_progress'? 'selected':''}>対応中</option>
+                <option value="done"       ${s.status==='done'       ? 'selected':''}>完了</option>
+              </select>
+              <span class="toggle-icon" id="icon-${s.id}">▼</span>
+            </div>
+            <div class="card-detail" id="detail-${s.id}">
+              <div class="detail-grid">
+                <div class="detail-row"><div class="label">パターンID</div><div class="value">${s.patternId || '—'}</div></div>
+                <div class="detail-row"><div class="label">ドメイン名</div><div class="value">${s.domainName || '—'}</div></div>
+                <div class="detail-row"><div class="label">旧サイト</div><div class="value">${s.oldsite === 'yes' ? 'あり' : 'なし'}</div></div>
+                <div class="detail-row"><div class="label">リダイレクト</div><div class="value">${s.redirect === 'needed' ? '必要' : '不要'}</div></div>
+              </div>
+              ${answerHtml ? `<div class="answers-section"><h4>ヒアリング内容</h4>${answerHtml}</div>` : ''}
+            </div>
+          </div>`;
+      }
+
+      function toggleDetail(id) {
+        const detail = document.getElementById('detail-' + id);
+        const icon   = document.getElementById('icon-' + id);
+        const isOpen = detail.classList.toggle('open');
+        icon.textContent = isOpen ? '▲' : '▼';
+      }
+
+      // ── ステータス更新 ──
+      async function updateStatus(id, selectEl) {
+        const newStatus = selectEl.value;
+        const card = document.getElementById('card-' + id);
+        try {
+          await db.collection('submissions').doc(id).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          card.className = `card status-${newStatus}`;
+          selectEl.className = `status-select ${newStatus}`;
+          // メモリ上のデータも更新
+          const s = allSubmissions.find(s => s.id === id);
+          if (s) s.status = newStatus;
+          showToast('ステータスを更新しました', 'success');
+        } catch (err) {
+          showToast('更新に失敗しました', 'error');
+        }
+      }
+
+      // ── CSV出力 ──
+      function exportCSV() {
+        const filtered = getFiltered();
+        if (filtered.length === 0) { showToast('出力するデータがありません', 'error'); return; }
+
+        const headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','メール','旧サイト','リダイレクト','ステータス'];
+        const rows = filtered.map(s => [
+          s.gardenName || '',
+          s.directorName || '',
+          s.publishDate || '',
+          s.submittedAt ? s.submittedAt.toDate().toLocaleDateString('ja-JP') : '',
+          s.patternId || '',
+          s.riskLabel || '',
+          s.domainLabel || s.domain || '',
+          s.mailLabel || s.mail || '',
+          s.oldsite === 'yes' ? 'あり' : 'なし',
+          s.redirect === 'needed' ? '必要' : '不要',
+          { pending: '未対応', in_progress: '対応中', done: '完了' }[s.status] || ''
+        ]);
+
+        const csv = [headers, ...rows]
+          .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+          .join('\n');
+
+        const bom = '﻿'; // Excel用BOM
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const now  = new Date();
+        a.href = url;
+        a.download = `提出一覧_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('CSVを出力しました', 'success');
+      }
+
+      function getFiltered() {
+        const status = document.getElementById('filter-status').value;
+        const risk   = document.getElementById('filter-risk').value;
+        const search = document.getElementById('filter-search').value.toLowerCase();
+        return allSubmissions.filter(s => {
+          if (status && s.status !== status) return false;
+          if (risk   && s.riskLevel !== risk) return false;
+          if (search && !(s.gardenName || '').toLowerCase().includes(search)) return false;
+          return true;
+        });
+      }
+
+      // ── 質問ID → ラベル対応表 ──
+      const QID_LABELS = {
+        'q-www':       'URLにwwwを付けるか',
+        'q-newdom-1':  '希望ドメイン候補',
+        'q-newdom-2':  '.ed.jp書類',
+        'q-mov-1':     '現在のドメイン管理会社',
+        'q-mov-2':     'AuthCode取得状況',
+        'q-mov-3':     'ドメイン有効期限',
+        'q-mov-4':     '移管ロック状況',
+        'q-ext-1':     'ドメイン管理会社',
+        'q-ext-2':     '管理会社連絡窓口',
+        'q-ext-3':     '管理画面ログイン',
+        'q-mailnew-1': '必要メールアドレス数',
+        'q-mailnew-2': 'アドレス命名希望',
+        'q-mailnew-3': '教育機関認証書類',
+        'q-mailcon-1': '現在のメールサービス名',
+        'q-mailcon-2': 'MXレコードの値',
+        'q-mailcon-3': 'SPFレコードの値',
+        'q-mailcon-4': 'DKIM/DMARC設定',
+        'q-mailcon-5': '既存メールサーバIP',
+        'q-old-1':     '旧サイトURL',
+        'q-old-2':     '旧サイト公開先サービス',
+        'q-old-3':     '旧サイト管理会社',
+        'q-old-4':     '旧サイト維持期間',
+      };
+
+      // ── トースト ──
+      let toastTimer;
+      function showToast(msg, type='info') {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.className = `toast ${type} show`;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+      }
+    </script>
+  </body>
+</html>
