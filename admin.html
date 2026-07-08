@@ -70,6 +70,10 @@
       .answer-item{display:flex;gap:12px;padding:8px 12px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:13px}
       .answer-item .q{color:var(--muted);min-width:160px;flex-shrink:0}
       .answer-item .a{font-weight:600}
+      .memo-section{margin-top:14px}
+      .memo-label{font-size:11px;font-weight:700;color:var(--brand-2);margin-bottom:6px;font-family:"Zen Maru Gothic",sans-serif}
+      .memo-textarea{width:100%;min-height:72px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:#fff;color:var(--ink);box-sizing:border-box}
+      .memo-textarea:focus{outline:none;border-color:var(--brand)}
       .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
       .empty-state .icon{font-size:48px;margin-bottom:12px}
       .loading{text-align:center;padding:40px;color:var(--muted)}
@@ -128,16 +132,4 @@
           <input type="text" id="filter-search" placeholder="園名で検索..." />
         </div>
         <div id="list-container">
-          <div class="loading">読み込み中...</div>
-        </div>
-      </div>
-    </div>
-
-    <div id="toast" class="toast"></div>
-
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="js/admin.js"></script>
-  </body>
-</html>
+          <div class="loading
