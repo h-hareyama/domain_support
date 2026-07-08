@@ -422,9 +422,14 @@
         appId: "1:1017898228058:web:b8847317ef1ae19cc07b63",
         measurementId: "G-X9L9MPZJN0"
       };
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db   = firebase.firestore();
+      let auth, db;
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db   = firebase.firestore();
+      } catch(e) {
+        console.error('Firebase init error:', e);
+      }
 
       let allSubmissions = [];
 
@@ -455,6 +460,9 @@
       function signOut() {
         auth.signOut();
       }
+      // グローバルスコープに明示的に登録
+      window.signIn = signIn;
+      window.signOut = signOut;
 
       // ── データ取得 ──
       async function loadSubmissions() {
@@ -641,11 +649,4 @@
         'q-mailcon-5': '既存メールサーバIP',
         'q-old-1':     '旧サイトURL',
         'q-old-2':     '旧サイト公開先サービス',
-        'q-old-3':     '旧サイト管理会社',
-        'q-old-4':     '旧サイト維持期間',
-      };
-
-      // ── トースト ──
-      let toastTimer;
-      function showToast(msg, type='info') {
-        const el = document.getElementById('toast'
+        'q-old-
