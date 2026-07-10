@@ -7,124 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet" />
-    <style>
-      :root {
-        --bg:#f4f2ee;--panel:#fffef9;--ink:#333;--muted:#64748b;--line:#e8e3db;
-        --brand:#197fc5;--brand-dark:#0f6baa;--brand-pale:#e7eff7;--brand-2:#f28700;
-        --ok:#047857;--ok-pale:#d1fae5;--warn:#b45309;--warn-pale:#fef3c7;
-        --danger:#ef3232;--danger-pale:#fee2e2;
-      }
-      *{box-sizing:border-box}
-      body{margin:0;padding:0;background:var(--bg);font-family:"Noto Sans JP","Hiragino Sans",sans-serif;font-size:14px;color:var(--ink);line-height:1.6;overflow-x:hidden}
-      button,input,select,textarea{font:inherit}
-      header{background:var(--brand);color:#fff;padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-      header .logo{background:var(--brand-2);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:50px;font-family:"Zen Maru Gothic",sans-serif}
-      header h1{margin:0;font-size:18px;font-weight:700;font-family:"Zen Maru Gothic",sans-serif;min-width:0}
-      header .spacer{flex:1}
-      header .user-info{font-size:12px;opacity:.85;display:flex;align-items:center;gap:10px}
-      .btn-logout{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 14px;border-radius:50px;cursor:pointer;font-size:12px;font-family:inherit}
-      .btn-logout:hover{background:rgba(255,255,255,.3)}
-      #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
-      .login-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:48px;text-align:center;width:min(360px,calc(100vw - 32px));box-shadow:0 4px 24px rgba(100,80,40,.1)}
-      .login-card h2{margin:0 0 8px;font-size:22px;font-family:"Zen Maru Gothic",sans-serif;color:var(--brand)}
-      .login-card p{margin:0 0 28px;font-size:13px;color:var(--muted)}
-      .btn-google{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:50px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:.15s}
-      .btn-google:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);transform:translateY(-1px)}
-      .btn-google svg{width:20px;height:20px}
-      #admin-screen{display:none}
-      .container{max-width:1100px;margin:0 auto;padding:28px 20px}
-      .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-      .toolbar h2{margin:0;font-size:20px;font-family:"Zen Maru Gothic",sans-serif;flex:1}
-      .count-badge{background:var(--brand-pale);color:var(--brand);font-size:12px;font-weight:700;padding:3px 10px;border-radius:50px}
-      .btn{padding:8px 18px;font-size:13px;font-weight:700;border:none;border-radius:50px;cursor:pointer;font-family:inherit;transition:.15s}
-      .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-dark)}
-      .btn-outline{background:transparent;border:1.5px solid var(--brand);color:var(--brand)}.btn-outline:hover{background:var(--brand-pale)}
-      .filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-      .filter-bar>*{flex:1 1 180px;min-width:0}
-      .filter-bar select,.filter-bar input{padding:7px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:#fff}
-      .filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:var(--brand)}
-      .submission-list{display:flex;flex-direction:column;gap:10px}
-      .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(100,80,40,.06);position:relative}
-      .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
-      .card.status-pending::before{background:var(--warn)}
-      .card.status-in_progress::before{background:var(--brand)}
-      .card.status-done::before{background:var(--ok)}
-      .card-header{display:grid;grid-template-columns:minmax(160px,.8fr) minmax(260px,2fr) auto 18px;align-items:center;gap:12px;padding:14px 18px 14px 22px;cursor:pointer;user-select:none}
-      .card-header:hover{background:#faf8f5}
-      .garden-name{font-size:16px;font-weight:700;font-family:"Zen Maru Gothic",sans-serif;min-width:0;overflow-wrap:anywhere}
-      .card-meta{display:flex;gap:8px;flex-wrap:wrap;min-width:0;font-size:12px;color:var(--muted)}
-      .meta-tag{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:2px 8px;max-width:100%;overflow-wrap:anywhere}
-      .risk-tag{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
-      .risk-high{background:#fee2e2;color:var(--danger)}.risk-mid{background:#fef3c7;color:var(--warn)}.risk-low{background:#d1fae5;color:var(--ok)}
-      .status-select{padding:5px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;max-width:100%}
-      .status-select.pending{border-color:var(--warn);color:var(--warn)}
-      .status-select.in_progress{border-color:var(--brand);color:var(--brand)}
-      .status-select.done{border-color:var(--ok);color:var(--ok)}
-      .toggle-icon{font-size:12px;color:var(--muted);margin-left:4px}
-      .card-detail{display:none;padding:0 22px 18px;border-top:1px solid var(--line)}
-      .card-detail.open{display:block}
-      .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin:14px 0}
-      .detail-row{font-size:13px}
-      .detail-row .label{color:var(--muted);font-size:11px;margin-bottom:2px}
-      .detail-row .value{font-weight:600;overflow-wrap:anywhere}
-      .answers-section{margin-top:14px}
-      .answers-section h4{margin:0 0 10px;font-size:12px;font-weight:700;color:var(--brand-2);letter-spacing:.05em;font-family:"Zen Maru Gothic",sans-serif}
-      .answer-item{display:flex;gap:12px;padding:8px 12px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:13px}
-      .answer-item .q{color:var(--muted);min-width:160px;flex-shrink:0}
-      .answer-item .a{font-weight:600;min-width:0;overflow-wrap:anywhere}
-      .memo-section{margin-top:14px}
-      .memo-label{font-size:11px;font-weight:700;color:var(--brand-2);margin-bottom:6px;font-family:"Zen Maru Gothic",sans-serif}
-      .memo-textarea{width:100%;min-height:72px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:#fff;color:var(--ink);box-sizing:border-box}
-      .memo-textarea:focus{outline:none;border-color:var(--brand)}
-      .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
-      .loading{text-align:center;padding:40px;color:var(--muted)}
-      .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:12px 24px;border-radius:50px;font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:999;white-space:nowrap;max-width:calc(100vw - 32px)}
-      .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-      .toast.success{background:#047857}.toast.error{background:#dc2626}
-      @media (max-width: 860px) {
-        header{padding:12px 18px;flex-wrap:wrap;gap:8px 12px}
-        header .logo{white-space:normal}
-        header h1{font-size:16px;flex:1 1 240px}
-        header .spacer{display:none}
-        header .user-info{width:100%;justify-content:space-between;gap:12px;overflow-wrap:anywhere}
-        .container{padding:24px 16px}
-        .card-header{grid-template-columns:1fr auto;align-items:start}
-        .garden-name{padding-right:20px}
-        .card-meta{grid-column:1 / -1;order:3}
-        .status-select{grid-column:2;grid-row:1;justify-self:end}
-        .toggle-icon{grid-column:2;grid-row:2;justify-self:end;text-align:right}
-      }
-      @media (max-width: 640px) {
-        #login-screen{min-height:100svh;padding:16px}
-        .login-card{padding:32px 22px}
-        .container{padding:20px 12px}
-        .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .toolbar h2{grid-column:1 / -1;font-size:18px}
-        .toolbar .btn{width:100%}
-        .filter-bar{display:grid;grid-template-columns:1fr;gap:10px}
-        .filter-bar select,.filter-bar input{width:100%;min-height:40px}
-        .card-header{grid-template-columns:1fr;gap:10px;padding:14px 14px 14px 18px;position:relative}
-        .garden-name{font-size:15px;padding-right:26px}
-        .card-meta{display:grid;grid-template-columns:1fr;width:100%;gap:6px}
-        .meta-tag,.risk-tag{display:block}
-        .status-select{grid-column:auto;grid-row:auto;justify-self:stretch;width:100%;min-height:40px}
-        .toggle-icon{position:absolute;top:14px;right:16px;margin:0}
-        .card-detail{padding:0 16px 16px 18px}
-        .detail-grid{grid-template-columns:1fr;gap:10px;margin:12px 0}
-        .answer-item{display:block;padding:10px 12px}
-        .answer-item .q{display:block;min-width:0;margin-bottom:2px}
-        .toast{bottom:16px;padding:10px 16px;border-radius:10px;white-space:normal;text-align:center;max-width:calc(100vw - 24px)}
-      }
-      @media (max-width: 420px) {
-        header{padding:10px 12px}
-        header h1{flex-basis:100%;font-size:15px}
-        header .user-info{align-items:stretch;flex-direction:column}
-        .btn-logout{width:100%;padding:8px 14px}
-        .toolbar{grid-template-columns:1fr}
-      }
-    </style>
+    <link rel="stylesheet" href="css/style.css" />
   </head>
-  <body>
+  <body class="admin-page">
 
     <div id="login-screen">
       <div class="login-card">
@@ -143,7 +28,7 @@
     </div>
 
     <div id="admin-screen">
-      <header>
+      <header class="admin-header">
         <span class="logo">スマートエデュケーション</span>
         <h1>HP公開準備フォーム 管理画面</h1>
         <span class="spacer"></span>
