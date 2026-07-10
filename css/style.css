@@ -249,8 +249,7 @@ header.brand .meta {
 .q-opt-desc,
 .field .hint,
 .q-hint,
-.ask-body .ask-why,
-.submit-hint {
+.ask-body .ask-why {
   color: var(--muted);
 }
 
@@ -475,14 +474,13 @@ header.brand .meta {
 }
 
 .btn-submit {
-  width: min(100%, 340px);
   color: #ffffff;
-  background: var(--accent-red);
-  box-shadow: 0 4px 12px rgba(240, 51, 51, 0.24);
+  background: var(--accent-orange);
+  box-shadow: 0 4px 12px rgba(242, 135, 0, 0.24);
 }
 
 .btn-submit:hover {
-  background: var(--accent-red-dark);
+  background: #d97800;
 }
 
 /* Result sheet */
@@ -642,45 +640,22 @@ header.brand .meta {
 
 .actions {
   margin-top: 28px;
-  padding: 26px;
+  padding: 30px 26px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-soft);
 }
 
-.actions h3 {
-  margin: 0 0 14px;
-  color: var(--brand-dark);
-  font-size: 16px;
-  font-weight: 700;
+.final-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
 }
 
-.submit-area {
-  display: grid;
-  gap: 10px;
-  justify-items: start;
-  padding: 22px;
-  background: var(--brand-pale);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.submit-hint {
-  margin: 0;
-  font-size: 14px;
-}
-
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.action-buttons .btn {
-  width: 100%;
-  padding-right: 14px;
-  padding-left: 14px;
+.final-actions .btn {
+  min-width: 180px;
 }
 
 .new-domain-form {
@@ -1352,8 +1327,7 @@ code.inline {
   .result-head,
   .result-body,
   .actions,
-  .new-domain-form,
-  .submit-area {
+  .new-domain-form {
     padding: 20px 16px;
   }
 
@@ -1365,8 +1339,16 @@ code.inline {
     padding: 14px 16px;
   }
 
-  .action-buttons {
-    grid-template-columns: 1fr;
+  .final-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .final-actions .btn {
+    min-width: 0;
+    padding-right: 12px;
+    padding-left: 12px;
   }
 
   .login-card {

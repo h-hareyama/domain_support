@@ -666,32 +666,12 @@
         <div class="result-body" id="result-body"></div>
 
         <div class="actions">
-          <!-- 登録ボタン -->
-          <div class="submit-area">
-            <button class="btn btn-submit" id="submit-btn" onclick="submitToFirestore()">
-              この内容で登録する
-            </button>
-            <p class="submit-hint">登録するとスマートエデュケーション担当者に通知されます</p>
-          </div>
-
-          <h3 style="margin-top: 24px">ファイル出力・共有</h3>
-          <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="copyAsMarkdown()">
-              Markdownでコピー
-            </button>
-            <button class="btn btn-secondary" onclick="downloadAsText()">
-              テキストで保存
-            </button>
+          <div class="final-actions">
             <button class="btn btn-secondary" onclick="window.print()">
-              印刷・PDF保存
+              PDF保存
             </button>
-            <button class="btn btn-secondary" onclick="sendSlack()">
-              文面をコピー
-            </button>
-          </div>
-          <div class="nav" style="margin-top: 16px">
-            <button class="btn btn-secondary" onclick="goStep(3)">
-              ← 質問に戻る
+            <button class="btn btn-submit" id="submit-btn" onclick="submitToFirestore()">
+              登録する
             </button>
           </div>
         </div>
