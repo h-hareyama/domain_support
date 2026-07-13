@@ -14,6 +14,51 @@ var auth = firebase.auth();
 var db   = firebase.firestore();
 
 var allSubmissions = [];
+var STATUS_ORDER = { pending: 0, in_progress: 1, done: 2 };
+var RISK_ORDER = { high: 0, mid: 1, low: 2 };
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeJsString(value) {
+  return String(value == null ? '' : value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/'/g, "\\'");
+}
+
+function toMillis(value) {
+  if (!value) return 0;
+  if (value.toMillis) return value.toMillis();
+  if (value.toDate) return value.toDate().getTime();
+  var parsed = new Date(value).getTime();
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function publishDateMillis(s) {
+  if (!s.publishDate) return Number.MAX_SAFE_INTEGER;
+  var parsed = new Date(s.publishDate + 'T00:00:00').getTime();
+  return isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
+}
+
+function compareText(a, b) {
+  return String(a || '').localeCompare(String(b || ''), 'ja');
+}
+
+function normalizeStatus(value) {
+  return STATUS_ORDER.hasOwnProperty(value) ? value : 'pending';
+}
+
+function normalizeRisk(value) {
+  return RISK_ORDER.hasOwnProperty(value) ? value : 'low';
+}
 
 // -- リダイレクト結果を処理 --
 auth.getRedirectResult().then(function(result) {
@@ -88,7 +133,27 @@ function applyFilter() {
     if (search && !(s.gardenName || '').toLowerCase().includes(search)) return false;
     return true;
   });
+  filtered = sortSubmissions(filtered);
   renderList(filtered);
+}
+
+function sortSubmissions(submissions) {
+  var sort = document.getElementById('filter-sort').value;
+  return submissions.slice().sort(function(a, b) {
+    if (sort === 'submitted_asc') return toMillis(a.submittedAt) - toMillis(b.submittedAt);
+    if (sort === 'publish_asc') return publishDateMillis(a) - publishDateMillis(b);
+    if (sort === 'publish_desc') return publishDateMillis(b) - publishDateMillis(a);
+    if (sort === 'garden_asc') return compareText(a.gardenName, b.gardenName);
+    if (sort === 'status') {
+      var statusDiff = (STATUS_ORDER[a.status || 'pending'] || 0) - (STATUS_ORDER[b.status || 'pending'] || 0);
+      return statusDiff || (toMillis(b.submittedAt) - toMillis(a.submittedAt));
+    }
+    if (sort === 'risk') {
+      var riskDiff = (RISK_ORDER[a.riskLevel || 'low'] || 0) - (RISK_ORDER[b.riskLevel || 'low'] || 0);
+      return riskDiff || (toMillis(b.submittedAt) - toMillis(a.submittedAt));
+    }
+    return toMillis(b.submittedAt) - toMillis(a.submittedAt);
+  });
 }
 
 // -- レンダリング --
@@ -106,53 +171,57 @@ function renderList(submissions) {
 
 function renderCard(s) {
   var date = s.submittedAt ? s.submittedAt.toDate().toLocaleDateString('ja-JP') : '-';
-  var riskClass   = 'risk-' + (s.riskLevel || 'low');
-  var statusClass = s.status || 'pending';
+  var riskClass   = 'risk-' + normalizeRisk(s.riskLevel);
+  var statusClass = normalizeStatus(s.status);
+  var safeId = escapeJsString(s.id);
   var answers = s.answers || {};
   var answerHtml = Object.entries(answers).map(function(entry) {
     var qid = entry[0], ans = entry[1];
     if (!ans) return '';
     var label = QID_LABELS[qid] || qid;
-    return '<div class="answer-item"><span class="q">' + label + '</span><span class="a">' + ans + '</span></div>';
+    return '<div class="answer-item"><span class="q">' + escapeHtml(label) + '</span><span class="a">' + escapeHtml(ans) + '</span></div>';
   }).filter(Boolean).join('');
 
   var sel = function() {
     return [
-      '<option value="pending"'     + (s.status==='pending'     ? ' selected' : '') + '>未対応</option>',
-      '<option value="in_progress"' + (s.status==='in_progress' ? ' selected' : '') + '>対応中</option>',
-      '<option value="done"'        + (s.status==='done'        ? ' selected' : '') + '>完了</option>'
+      '<option value="pending"'     + (statusClass==='pending'     ? ' selected' : '') + '>未対応</option>',
+      '<option value="in_progress"' + (statusClass==='in_progress' ? ' selected' : '') + '>対応中</option>',
+      '<option value="done"'        + (statusClass==='done'        ? ' selected' : '') + '>完了</option>'
     ].join('');
   };
 
-  var memoVal = (s.memo || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var memoVal = escapeHtml(s.memo || '');
 
-  return '<div class="card status-' + statusClass + '" id="card-' + s.id + '">' +
-    '<div class="card-header" onclick="toggleDetail(\'' + s.id + '\')">' +
-      '<div class="garden-name">' + (s.gardenName || '(未入力)') + '</div>' +
+  return '<div class="card status-' + statusClass + '" id="card-' + escapeHtml(s.id) + '">' +
+    '<div class="card-header" onclick="toggleDetail(\'' + safeId + '\')">' +
+      '<div class="garden-name">' + escapeHtml(s.gardenName || '(未入力)') + '</div>' +
       '<div class="card-meta">' +
-        '<span class="meta-tag">提出: ' + date + '</span>' +
-        '<span class="meta-tag">' + (s.domainLabel || s.domain || '-') + '</span>' +
-        '<span class="meta-tag">メール: ' + (s.mailLabel || s.mail || '-') + '</span>' +
-        '<span class="meta-tag">担当: ' + (s.directorName || '-') + '</span>' +
-        '<span class="meta-tag">公開希望: ' + (s.publishDate || '-') + '</span>' +
-        '<span class="risk-tag ' + riskClass + '">' + (s.riskLabel || '-') + '</span>' +
+        '<span class="meta-tag">提出: ' + escapeHtml(date) + '</span>' +
+        '<span class="meta-tag">' + escapeHtml(s.domainLabel || s.domain || '-') + '</span>' +
+        '<span class="meta-tag">メール: ' + escapeHtml(s.mailLabel || s.mail || '-') + '</span>' +
+        '<span class="meta-tag">担当: ' + escapeHtml(s.directorName || '-') + '</span>' +
+        '<span class="meta-tag">公開希望: ' + escapeHtml(s.publishDate || '-') + '</span>' +
+        '<span class="risk-tag ' + riskClass + '">' + escapeHtml(s.riskLabel || '-') + '</span>' +
       '</div>' +
-      '<select class="status-select ' + statusClass + '" onclick="event.stopPropagation()" onchange="updateStatus(\'' + s.id + '\', this)">' +
+      '<select class="status-select ' + statusClass + '" onclick="event.stopPropagation()" onchange="updateStatus(\'' + safeId + '\', this)">' +
         sel() +
       '</select>' +
-      '<span class="toggle-icon" id="icon-' + s.id + '">v</span>' +
+      '<span class="toggle-icon" id="icon-' + escapeHtml(s.id) + '">v</span>' +
     '</div>' +
-    '<div class="card-detail" id="detail-' + s.id + '">' +
+    '<div class="card-detail" id="detail-' + escapeHtml(s.id) + '">' +
       '<div class="detail-grid">' +
-        '<div class="detail-row"><div class="label">パターンID</div><div class="value">' + (s.patternId || '-') + '</div></div>' +
-        '<div class="detail-row"><div class="label">ドメイン名</div><div class="value">' + (s.domainName || '-') + '</div></div>' +
+        '<div class="detail-row"><div class="label">パターンID</div><div class="value">' + escapeHtml(s.patternId || '-') + '</div></div>' +
+        '<div class="detail-row"><div class="label">ドメイン名</div><div class="value">' + escapeHtml(s.domainName || '-') + '</div></div>' +
         '<div class="detail-row"><div class="label">旧サイト</div><div class="value">' + (s.oldsite === 'yes' ? 'あり' : 'なし') + '</div></div>' +
         '<div class="detail-row"><div class="label">リダイレクト</div><div class="value">' + (s.redirect === 'needed' ? '必要' : '不要') + '</div></div>' +
       '</div>' +
       (answerHtml ? '<div class="answers-section"><h4>ヒアリング内容</h4>' + answerHtml + '</div>' : '') +
       '<div class="memo-section">' +
         '<div class="memo-label">社内メモ</div>' +
-        '<textarea class="memo-textarea" id="memo-' + s.id + '" onclick="event.stopPropagation()" onblur="saveMemo(\'' + s.id + '\', this.value)">' + memoVal + '</textarea>' +
+        '<textarea class="memo-textarea" id="memo-' + escapeHtml(s.id) + '" onclick="event.stopPropagation()" onblur="saveMemo(\'' + safeId + '\', this.value)">' + memoVal + '</textarea>' +
+      '</div>' +
+      '<div class="card-actions">' +
+        '<button class="btn btn-danger" onclick="event.stopPropagation(); deleteSubmission(\'' + safeId + '\', this)">削除</button>' +
       '</div>' +
     '</div>' +
   '</div>';
@@ -198,6 +267,33 @@ function updateStatus(id, selectEl) {
   });
 }
 
+// -- 提出データ削除 --
+function deleteSubmission(id, buttonEl) {
+  var s = allSubmissions.find(function(s) { return s.id === id; });
+  var name = s && s.gardenName ? s.gardenName : '(未入力)';
+  var ok = window.confirm('「' + name + '」の提出データを削除します。\nこの操作は元に戻せません。よろしいですか？');
+  if (!ok) return;
+
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.textContent = '削除中...';
+  }
+
+  db.collection('submissions').doc(id).delete()
+    .then(function() {
+      allSubmissions = allSubmissions.filter(function(s) { return s.id !== id; });
+      applyFilter();
+      showToast('提出データを削除しました', 'success');
+    })
+    .catch(function() {
+      if (buttonEl) {
+        buttonEl.disabled = false;
+        buttonEl.textContent = '削除';
+      }
+      showToast('削除に失敗しました', 'error');
+    });
+}
+
 // -- CSV出力 --
 function exportCSV() {
   var filtered = getFiltered();
@@ -239,12 +335,13 @@ function getFiltered() {
   var status = document.getElementById('filter-status').value;
   var risk   = document.getElementById('filter-risk').value;
   var search = document.getElementById('filter-search').value.toLowerCase();
-  return allSubmissions.filter(function(s) {
+  var filtered = allSubmissions.filter(function(s) {
     if (status && s.status !== status) return false;
     if (risk   && s.riskLevel !== risk) return false;
     if (search && !(s.gardenName || '').toLowerCase().includes(search)) return false;
     return true;
   });
+  return sortSubmissions(filtered);
 }
 
 // -- 質問ID -> ラベル対応表 --
@@ -278,6 +375,7 @@ document.getElementById('reload-btn').addEventListener('click', loadSubmissions)
 document.getElementById('filter-status').addEventListener('change', applyFilter);
 document.getElementById('filter-risk').addEventListener('change', applyFilter);
 document.getElementById('filter-search').addEventListener('input', applyFilter);
+document.getElementById('filter-sort').addEventListener('change', applyFilter);
 
 // -- トースト --
 var toastTimer;
