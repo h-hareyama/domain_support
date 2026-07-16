@@ -23,6 +23,11 @@
         >
       </header>
 
+      <div class="draft-bar" aria-live="polite">
+        <span class="draft-status" id="draft-status">この端末に入力内容を自動保存します</span>
+        <button type="button" class="draft-clear" id="draft-clear-btn">下書きを削除</button>
+      </div>
+
       <!-- ステップインジケータ -->
       <div class="stepper" id="stepper">
         <div class="step active" data-step="0">
@@ -249,6 +254,39 @@
                 <div class="q-opt-title">新規でメールを始める</div>
                 <div class="q-opt-desc">
                   HPと同じURLのメールアドレスを新たに作成する（例：info@〇〇.ed.jp）
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="q-group hidden" id="mail-service-group">
+          <label class="q-label">新規メールの利用方法を選んでください</label>
+          <span class="q-hint">選択内容に応じて、結果ページに必要な案内を表示します</span>
+          <div class="q-options">
+            <label class="q-opt">
+              <input type="radio" name="mail-service" value="sakura" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">さくらのビジネスメール</div>
+                <div class="q-opt-desc">
+                  スマートエデュケーションが、メールアドレスを利用できる状態まで準備をサポートします
+                </div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="mail-service" value="gws" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">Google Workspace for Education</div>
+                <div class="q-opt-desc">
+                  申請・審査には1～2か月程度かかる場合があります。お申し込み後は、園とGoogleの代理店で直接やり取りしていただきます
+                </div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="mail-service" value="undecided" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">まだ決まっていない</div>
+                <div class="q-opt-desc">
+                  利用方法をこれから検討する
                 </div>
               </div>
             </label>
@@ -661,6 +699,28 @@
               </select>
             </div>
           </div>
+        </div>
+
+        <div class="service-guide hidden" id="s5-gws-panel">
+          <div class="service-guide-label">Google Workspace for Education</div>
+          <h3>園からGoogleの代理店へ直接お申し込みください</h3>
+          <p>
+            申請・審査には1～2か月程度かかる場合があります。審査状況により期間は前後します。
+          </p>
+          <p>
+            お申し込み後は、園とGoogleの代理店で直接やり取りしていただきます。弊社では申請状況の確認や手続きの代行は行いません。
+          </p>
+          <a
+            class="service-guide-link"
+            href="https://edu.google.com/intl/ALL_jp/workspace-for-education/editions/overview/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Google Workspace for Education 公式サイトを開く
+          </a>
+          <p class="service-guide-note">
+            公式サイトのページ上部（パソコンでは画面右上）にある「営業担当者に問い合わせる」を選んでお申し込みください。
+          </p>
         </div>
 
         <div class="result-body" id="result-body"></div>

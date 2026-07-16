@@ -36,7 +36,7 @@ async function submitToFirestore() {
   const risk = calcRisk(state);
   const pid  = patternId(state);
   const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
-  const mailLabel   = {none:'なし', new:'新規', continue:'既存継続'}[state.mail] || '—';
+  const mailLabel   = getMailLabel(state);
 
   const payload = {
     gardenName:    state.gardenName,
@@ -50,6 +50,7 @@ async function submitToFirestore() {
     domainLabel:   domainLabel,
     mail:          state.mail,
     mailLabel:     mailLabel,
+    mailService:   state.mail === 'new' ? state.mailService : '',
     oldsite:       state.oldsite,
     redirect:      state.redirect,
     answers:       state.answers,
@@ -63,6 +64,7 @@ async function submitToFirestore() {
     showToast('登録しました！担当者に通知されます', 'success');
     btn.textContent = '登録済み ✓';
     btn.style.background = 'var(--ok)';
+    clearDraft();
     console.log('登録ID:', docRef.id);
   } catch (err) {
     console.error(err);
@@ -84,6 +86,7 @@ const state = {
   domainName: '',
   domain: '',     // new / transfer / external
   mail: '',       // none / new / continue
+  mailService: '', // sakura / gws / undecided
   oldsite: '',    // yes / no
   redirect: '',   // none / needed
   redirectWebCompany: '', redirectDomainCompany: '', redirectTool: '',
@@ -101,6 +104,188 @@ const state = {
   // 出力設定
   recipientEmail: '',
 };
+
+function getMailLabel(s) {
+  if (s.mail === 'new') {
+    const service = {
+      sakura: 'さくらのビジネスメール',
+      gws: 'Google Workspace for Education',
+      undecided: '利用方法未定',
+    }[s.mailService];
+    return service ? `新規（${service}）` : '新規';
+  }
+  return { none: 'なし', continue: '既存継続' }[s.mail] || '—';
+}
+
+const DRAFT_KEY = 'domain-support-form-draft';
+const DRAFT_VERSION = 1;
+const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+let draftSaveTimer = null;
+let currentStep = 0;
+let isRestoringDraft = false;
+
+function getSelectedValue(name) {
+  const selected = document.querySelector(`input[name="${name}"]:checked`);
+  return selected ? selected.value : '';
+}
+
+function syncCoreStateFromDOM() {
+  const gardenName = document.getElementById('garden-name');
+  const directorName = document.getElementById('director-name');
+  const publishDate = document.getElementById('publish-date');
+
+  if (gardenName) state.gardenName = gardenName.value.trim();
+  if (directorName) state.directorName = directorName.value.trim();
+  if (publishDate) state.publishDate = publishDate.value;
+
+  state.domain = getSelectedValue('domain') || state.domain;
+  state.mail = getSelectedValue('mail') || state.mail;
+  state.mailService = state.mail === 'new'
+    ? (getSelectedValue('mail-service') || state.mailService)
+    : '';
+  state.oldsite = getSelectedValue('oldsite') || state.oldsite;
+  state.redirect = state.oldsite === 'yes'
+    ? (getSelectedValue('redirect') || state.redirect)
+    : '';
+  syncAnswersFromDOM();
+}
+
+function getDraftFields() {
+  const fields = {};
+  document.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
+    if (el.type !== 'radio' && el.type !== 'button' && el.type !== 'submit') {
+      fields[el.id] = el.value;
+    }
+  });
+  return fields;
+}
+
+function formatDraftTime(timestamp) {
+  return new Date(timestamp).toLocaleTimeString('ja-JP', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function setDraftStatus(message, stateName = '') {
+  const el = document.getElementById('draft-status');
+  if (!el) return;
+  el.textContent = message;
+  el.className = `draft-status ${stateName}`.trim();
+}
+
+function saveDraft() {
+  if (isRestoringDraft) return;
+  try {
+    syncCoreStateFromDOM();
+    const savedAt = Date.now();
+    const draft = {
+      version: DRAFT_VERSION,
+      savedAt,
+      currentStep,
+      maxStep: state.maxStep,
+      state,
+      fields: getDraftFields(),
+      radios: {
+        domain: getSelectedValue('domain'),
+        mail: getSelectedValue('mail'),
+        mailService: getSelectedValue('mail-service'),
+        oldsite: getSelectedValue('oldsite'),
+        redirect: getSelectedValue('redirect'),
+      },
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    setDraftStatus(`保存済み ${formatDraftTime(savedAt)}`, 'saved');
+  } catch (err) {
+    console.error('draft save error:', err);
+    setDraftStatus('この端末に下書きを保存できませんでした', 'error');
+  }
+}
+
+function queueDraftSave() {
+  if (isRestoringDraft) return;
+  clearTimeout(draftSaveTimer);
+  setDraftStatus('保存中...');
+  draftSaveTimer = setTimeout(saveDraft, 400);
+}
+
+function clearDraft() {
+  clearTimeout(draftSaveTimer);
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch (err) {
+    console.error('draft clear error:', err);
+  }
+  setDraftStatus('この端末に入力内容を自動保存します');
+}
+
+function updateConditionalFields() {
+  const mail = getSelectedValue('mail') || state.mail;
+  const mailServiceGroup = document.getElementById('mail-service-group');
+  if (mailServiceGroup) {
+    mailServiceGroup.classList.toggle('hidden', mail !== 'new');
+  }
+
+  const oldsite = getSelectedValue('oldsite') || state.oldsite;
+  const redirectGroup = document.getElementById('redirect-group');
+  if (redirectGroup) {
+    redirectGroup.classList.toggle('hidden', oldsite !== 'yes');
+  }
+}
+
+function restoreDraft() {
+  let draft;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    draft = JSON.parse(raw);
+    if (
+      draft.version !== DRAFT_VERSION ||
+      !Number.isFinite(draft.savedAt) ||
+      Date.now() - draft.savedAt > DRAFT_MAX_AGE
+    ) {
+      clearDraft();
+      return false;
+    }
+  } catch (err) {
+    console.error('draft restore error:', err);
+    clearDraft();
+    return false;
+  }
+
+  isRestoringDraft = true;
+  Object.assign(state, draft.state || {});
+  state.answers = state.answers || {};
+  state.checked = state.checked || {};
+  state.maxStep = Number.isFinite(draft.maxStep) ? draft.maxStep : 0;
+
+  Object.entries(draft.fields || {}).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+  });
+
+  const radioNames = {
+    domain: 'domain',
+    mail: 'mail',
+    mailService: 'mail-service',
+    oldsite: 'oldsite',
+    redirect: 'redirect',
+  };
+  Object.entries(radioNames).forEach(([key, name]) => {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
+      el.checked = el.value === (draft.radios || {})[key];
+    });
+  });
+
+  updateConditionalFields();
+  const step = Math.max(0, Math.min(4, Number(draft.currentStep) || 0));
+  if (step === 4) generateResult(true);
+  else goStep(step, true);
+  currentStep = step;
+  isRestoringDraft = false;
+  setDraftStatus(`下書きを復元しました（${formatDraftTime(draft.savedAt)}保存）`, 'restored');
+  return true;
+}
 
 // ═══════════════════════════════════════════
 // ヒアリング項目マスタ
@@ -169,17 +354,12 @@ const QUESTIONS = [
     q: '必要なメールアドレスの数',
     why: 'メールサービスのプランを決めるために必要です',
     placeholder: '例：3アドレス（園長・事務・info@）',
-    cond: s => s.mail === 'new', type: 'text' },
+    cond: s => s.mail === 'new' && s.mailService === 'sakura', type: 'text' },
   { id: 'q-mailnew-2', cat: 'メール', required: true,
-    q: '各アドレスの命名希望',
-    why: 'どのようなメールアドレスを作るかを決めるために入力してください',
-    placeholder: '例：info@, principal@, office@',
-    cond: s => s.mail === 'new', type: 'textarea' },
-  { id: 'q-mailnew-3', cat: 'メール', required: true,
-    q: '教育機関認証書類（GWS申請時に必要）',
-    why: '教育機関向けメールサービスの申請に必要な書類です',
-    placeholder: '例：認定証コピーを準備済み / 確認中',
-    cond: s => s.mail === 'new', type: 'text' },
+    q: '希望するメールアドレス',
+    why: '作成を希望するアドレスを、わかる範囲で入力してください',
+    placeholder: '例：info@、principal@、office@',
+    cond: s => s.mail === 'new' && s.mailService === 'sakura', type: 'textarea' },
 
   // ── メール継続 ──
   { id: 'q-mailcon-1', cat: 'メール', required: true,
@@ -379,6 +559,14 @@ function goStep(n, force = false) {
       const m = document.querySelector('input[name="mail"]:checked');
       if (!m) { showToast('メールの扱いを選択してください', 'error'); return; }
       state.mail = m.value;
+      if (state.mail === 'new') {
+        const service = document.querySelector('input[name="mail-service"]:checked');
+        if (!service) {
+          showToast('新規メールの利用方法を選択してください', 'error');
+          return;
+        }
+        state.mailService = service.value;
+      }
     }
   }
 
@@ -404,6 +592,8 @@ function goStep(n, force = false) {
   });
 
   // スクロール
+  currentStep = n;
+  queueDraftSave();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -435,8 +625,18 @@ async function lookupPostal(digits, targetId) {
 
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // ドメイン選択ラジオ：状態は goStep() で取得、詳細入力は結果シートで表示するため
-  // ここでは UI 更新なし
+  document.querySelectorAll('input[name="mail"]').forEach(el => {
+    el.addEventListener('change', () => {
+      state.mail = el.value;
+      updateConditionalFields();
+    });
+  });
+
+  document.querySelectorAll('input[name="mail-service"]').forEach(el => {
+    el.addEventListener('change', () => {
+      state.mailService = el.value;
+    });
+  });
 
   // 旧サイトあり選択時のサブ質問表示
   document.querySelectorAll('input[name="oldsite"]').forEach(el => {
@@ -474,6 +674,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const digits = this.value.replace(/[^\d]/g, '');
     if (digits.length === 7) lookupPostal(digits, 'new-address');
   });
+
+  document.addEventListener('input', queueDraftSave);
+  document.addEventListener('change', queueDraftSave);
+  document.getElementById('draft-clear-btn').addEventListener('click', () => {
+    if (!window.confirm('保存した下書きと現在の入力内容を削除します。よろしいですか？')) return;
+    resetAll(false);
+    showToast('下書きを削除しました', 'success');
+  });
+
+  restoreDraft();
 });
 
 // ═══════════════════════════════════════════
@@ -486,10 +696,12 @@ function generateResult(silent = false) {
   state.publishDate  = document.getElementById('publish-date').value;
   const domainEl   = document.querySelector('input[name="domain"]:checked');
   const mailEl     = document.querySelector('input[name="mail"]:checked');
+  const mailServiceEl = document.querySelector('input[name="mail-service"]:checked');
   const oldsiteEl  = document.querySelector('input[name="oldsite"]:checked');
   const redirectEl = document.querySelector('input[name="redirect"]:checked');
   if (domainEl)  state.domain  = domainEl.value;
   if (mailEl)    state.mail    = mailEl.value;
+  state.mailService = state.mail === 'new' && mailServiceEl ? mailServiceEl.value : '';
   state.oldsite  = oldsiteEl  ? oldsiteEl.value  : state.oldsite;
   state.redirect = redirectEl ? redirectEl.value : state.redirect;
 
@@ -517,6 +729,11 @@ function generateResult(silent = false) {
     else rdPanel.classList.add('hidden');
   }
 
+  const gwsPanel = document.getElementById('s5-gws-panel');
+  if (gwsPanel) {
+    gwsPanel.classList.toggle('hidden', !(state.mail === 'new' && state.mailService === 'gws'));
+  }
+
   // ドメイン名ラベル＆申請フォームの表示を選択に合わせて更新
   const DLABEL = {
     new:      { label: '希望ドメイン名',   hint: '第1〜第3希望を入力してください（複数ある場合はカンマ区切りでOK）' },
@@ -542,7 +759,7 @@ function generateResult(silent = false) {
 
   const meta = [];
   meta.push({ new: 'ドメイン新規', transfer: 'ドメイン移管', external: '他社管理継続' }[state.domain]);
-  meta.push({ none: 'メールなし', new: 'メール新規', continue: 'メール継続' }[state.mail]);
+  meta.push(`メール: ${getMailLabel(state)}`);
   if (state.oldsite === 'yes') meta.push('旧サイトあり');
   if (state.redirect === 'needed') {
     meta.push('リダイレクト必要');
@@ -630,7 +847,7 @@ function buildMarkdown() {
 
   md += `## 判定条件\n`;
   md += `- ドメイン: ${ {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] }\n`;
-  md += `- メール: ${ {none:'なし', new:'新規', continue:'既存継続'}[state.mail] }\n`;
+  md += `- メール: ${getMailLabel(state)}\n`;
   md += `- 旧サイト: ${ state.oldsite === 'yes' ? 'あり' : 'なし' }\n`;
   if (state.redirect) md += `- リダイレクト: ${ {none:'不要', needed:'必要'}[state.redirect] }\n`;
   md += `\n`;
@@ -687,7 +904,7 @@ function sendEmail() {
   const pid = patternId(state);
   const subject = `【HP公開ヒアリングシート】${state.gardenName || '〇〇園'}さま`;
   const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
-  const mailLabel   = {none:'なし', new:'新規', continue:'既存継続'}[state.mail] || '—';
+  const mailLabel   = getMailLabel(state);
 
   let body = `${state.gardenName || '〇〇園'} さまのHP公開ヒアリングシートです。\n\n`;
   body += `■ パターンID: ${pid}\n`;
@@ -743,7 +960,7 @@ function sendSlack() {
   const risk = calcRisk(state);
   const pid = patternId(state);
   const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
-  const mailLabel   = {none:'なし', new:'新規', continue:'既存継続'}[state.mail] || '—';
+  const mailLabel   = getMailLabel(state);
   const visible = QUESTIONS.filter(q => q.cond(state));
 
   let text = `【HP公開ヒアリングシート】\n`;
@@ -771,19 +988,26 @@ function sendSlack() {
   });
 }
 
-function resetAll() {
-  if (!window.confirm('入力内容をすべてリセットしてよろしいですか？')) return;
+function resetAll(askForConfirmation = true) {
+  if (askForConfirmation && !window.confirm('入力内容をすべてリセットしてよろしいですか？')) return;
   Object.keys(state).forEach(k => {
-    if (typeof state[k] === 'string') state[k] = '';
-    else state[k] = {};
+    if (k === 'answers' || k === 'checked') state[k] = {};
+    else if (k === 'maxStep') state[k] = 0;
+    else state[k] = '';
   });
   document.querySelectorAll('input[type="text"], input[type="date"], input[type="email"], input[type="tel"], textarea').forEach(el => el.value = '');
   document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
   document.getElementById('redirect-group').classList.add('hidden');
+  document.getElementById('mail-service-group').classList.add('hidden');
   document.getElementById('new-domain-form').classList.add('hidden');
   const rdPanel2 = document.getElementById('s5-redirect-panel');
   if (rdPanel2) rdPanel2.classList.add('hidden');
+  const gwsPanel2 = document.getElementById('s5-gws-panel');
+  if (gwsPanel2) gwsPanel2.classList.add('hidden');
   state.maxStep = 0;
+  isRestoringDraft = true;
   goStep(0);
+  isRestoringDraft = false;
+  clearDraft();
 }

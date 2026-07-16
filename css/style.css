@@ -96,7 +96,7 @@ header.brand {
   align-items: center;
   gap: 20px;
   padding: 20px 24px;
-  margin-bottom: 26px;
+  margin-bottom: 12px;
 }
 
 .logo {
@@ -133,6 +133,48 @@ header.brand .meta {
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.draft-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 38px;
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.draft-status.saved {
+  color: var(--ok);
+}
+
+.draft-status.restored {
+  color: var(--brand-dark);
+  font-weight: 700;
+}
+
+.draft-status.error {
+  color: var(--danger);
+}
+
+.draft-clear {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  color: var(--brand-dark);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.draft-clear:hover {
+  color: var(--accent-red-dark);
 }
 
 /* Stepper */
@@ -557,6 +599,64 @@ header.brand .meta {
   border: 1px solid var(--line);
   border-top: none;
   border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.service-guide {
+  margin: 20px 0;
+  padding: 26px 28px;
+  background: var(--brand-pale);
+  border: 1px solid var(--line);
+  border-left: 7px solid var(--brand);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+.service-guide-label {
+  margin-bottom: 4px;
+  color: var(--brand-dark);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.service-guide h3 {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+  font-size: 21px;
+  line-height: 1.5;
+}
+
+.service-guide p {
+  margin: 8px 0;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.service-guide-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 12px;
+  padding: 10px 18px;
+  color: #ffffff;
+  background: var(--brand);
+  border: 2px solid var(--brand);
+  border-radius: var(--radius);
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.service-guide-link:hover {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+}
+
+.service-guide .service-guide-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .section-title {
@@ -1352,8 +1452,26 @@ code.inline {
   .result-head,
   .result-body,
   .actions,
-  .new-domain-form {
+  .new-domain-form,
+  .service-guide {
     padding: 20px 16px;
+  }
+
+  .draft-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+
+  .service-guide h3 {
+    font-size: 19px;
+  }
+
+  .service-guide-link {
+    width: 100%;
+    text-align: center;
   }
 
   .result-head h2 {
@@ -1483,6 +1601,7 @@ code.inline {
   .stepper,
   .nav,
   .actions,
+  .draft-bar,
   header.brand,
   .admin-header {
     display: none;
