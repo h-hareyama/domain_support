@@ -72,6 +72,102 @@ function getRedirectToolLabel(value) {
   }[value] || value || '';
 }
 
+var DOMAIN_APPLICATION_GROUPS = [
+  {
+    title: '組織情報',
+    fields: [
+      ['法人種類', 'orgType'],
+      ['認可', 'orgLicensed'],
+      ['組織名（園名のみ）', 'orgName'],
+      ['読み仮名', 'orgKana'],
+      ['英語表記', 'orgNameEn']
+    ]
+  },
+  {
+    title: '住所',
+    fields: [
+      ['郵便番号', 'postal'],
+      ['住所', 'address'],
+      ['建物名', 'building']
+    ]
+  },
+  {
+    title: '登録担当者',
+    fields: [
+      ['氏名（漢字）', 'contactName'],
+      ['氏名（ローマ字）', 'contactRoman'],
+      ['部署', 'contactDept'],
+      ['役職', 'contactTitle'],
+      ['電話番号', 'contactPhone'],
+      ['メールアドレス', 'contactEmail']
+    ]
+  },
+  {
+    title: '登記情報',
+    fields: [
+      ['登記年月日', 'regDate'],
+      ['登記地住所', 'regAddress'],
+      ['代表者氏名', 'repName'],
+      ['代表者氏名（ローマ字）', 'repRoman'],
+      ['代表者役職', 'repTitle']
+    ]
+  }
+];
+
+function getDomainApplicationInfo(s) {
+  if (s.domainApplicationInfo && typeof s.domainApplicationInfo === 'object') {
+    return s.domainApplicationInfo;
+  }
+  return {
+    orgType: s.newOrgType,
+    orgLicensed: s.newOrgLicensed,
+    orgName: s.newOrgName,
+    orgKana: s.newOrgKana,
+    orgNameEn: s.newOrgNameEn,
+    postal: s.newPostal,
+    address: s.newAddress,
+    building: s.newBuilding,
+    contactName: s.newContactName,
+    contactRoman: s.newContactRoman,
+    contactDept: s.newContactDept,
+    contactTitle: s.newContactTitle,
+    contactPhone: s.newContactPhone,
+    contactEmail: s.newContactEmail,
+    regDate: s.newRegDate,
+    regAddress: s.newRegAddress,
+    repName: s.newRepName,
+    repRoman: s.newRepRoman,
+    repTitle: s.newRepTitle
+  };
+}
+
+function getLicensedLabel(value) {
+  if (value === 'yes') return '受けている';
+  if (value === 'no') return '受けていない';
+  return value || '';
+}
+
+function renderDomainApplicationInfo(s) {
+  if (s.domain !== 'new') return '';
+  var info = getDomainApplicationInfo(s);
+  var hasValues = Object.keys(info).some(function(key) { return !!info[key]; });
+  if (!hasValues) {
+    return '<div class="answers-section"><h4>ドメイン取得申請情報</h4>' +
+      '<div class="admin-data-notice">この提出には取得申請情報が保存されていません。フォームから再登録してください。</div></div>';
+  }
+
+  return '<div class="answers-section"><h4>ドメイン取得申請情報</h4>' +
+    DOMAIN_APPLICATION_GROUPS.map(function(group) {
+      var rows = group.fields.map(function(field) {
+        var value = field[1] === 'orgLicensed' ? getLicensedLabel(info[field[1]]) : info[field[1]];
+        var missingClass = value ? '' : ' missing';
+        return '<div class="answer-item' + missingClass + '"><span class="q">' + escapeHtml(field[0]) +
+          '</span><span class="a">' + escapeHtml(value || '未入力') + '</span></div>';
+      }).join('');
+      return '<div class="admin-info-group"><div class="admin-info-title">' + escapeHtml(group.title) + '</div>' + rows + '</div>';
+    }).join('') + '</div>';
+}
+
 // -- リダイレクト結果を処理 --
 auth.getRedirectResult().then(function(result) {
   if (result && result.user) {
@@ -217,6 +313,7 @@ function renderCard(s) {
   };
 
   var memoVal = escapeHtml(s.memo || '');
+  var domainApplicationHtml = renderDomainApplicationInfo(s);
 
   return '<div class="card status-' + statusClass + '" id="card-' + escapeHtml(s.id) + '">' +
     '<div class="card-header" onclick="toggleDetail(\'' + safeId + '\')">' +
@@ -241,6 +338,7 @@ function renderCard(s) {
         '<div class="detail-row"><div class="label">旧サイト</div><div class="value">' + (s.oldsite === 'yes' ? 'あり' : 'なし') + '</div></div>' +
         '<div class="detail-row"><div class="label">リダイレクト</div><div class="value">' + (s.redirect === 'needed' ? '必要' : '不要') + '</div></div>' +
       '</div>' +
+      domainApplicationHtml +
       (answerHtml ? '<div class="answers-section"><h4>ヒアリング内容</h4>' + answerHtml + '</div>' : '') +
       (redirectInfoHtml ? '<div class="answers-section"><h4>リダイレクト連絡先</h4>' + redirectInfoHtml + '</div>' : '') +
       '<div class="memo-section">' +
@@ -325,10 +423,11 @@ function deleteSubmission(id, buttonEl) {
 function exportCSV() {
   var filtered = getFiltered();
   if (filtered.length === 0) { showToast('出力するデータがありません', 'error'); return; }
-  var headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','メール','旧サイト','旧サイト管理会社','旧サイト管理会社電話','旧サイト管理会社メール','リダイレクト','WEB制作会社','WEB制作会社電話','WEB制作会社メール','ドメイン管理会社','ドメイン管理会社電話','ドメイン管理会社メール','旧HPツール','ステータス','メモ'];
+  var headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','法人種類','認可','組織名','組織名読み','英語表記','郵便番号','住所','建物名','登録担当者氏名','登録担当者ローマ字','部署','役職','担当者電話','担当者メール','登記年月日','登記地住所','代表者氏名','代表者ローマ字','代表者役職','メール','旧サイト','旧サイト管理会社','旧サイト管理会社電話','旧サイト管理会社メール','リダイレクト','WEB制作会社','WEB制作会社電話','WEB制作会社メール','ドメイン管理会社','ドメイン管理会社電話','ドメイン管理会社メール','旧HPツール','ステータス','メモ'];
   var statusMap = { pending: '未対応', in_progress: '対応中', done: '完了' };
   var rows = filtered.map(function(s) {
     var redirectInfo = s.redirectInfo && typeof s.redirectInfo === 'object' ? s.redirectInfo : {};
+    var domainInfo = s.domain === 'new' ? getDomainApplicationInfo(s) : {};
     var answers = s.answers || {};
     return [
       s.gardenName || '',
@@ -338,6 +437,25 @@ function exportCSV() {
       s.patternId || '',
       s.riskLabel || '',
       s.domainLabel || s.domain || '',
+      domainInfo.orgType || '',
+      getLicensedLabel(domainInfo.orgLicensed),
+      domainInfo.orgName || '',
+      domainInfo.orgKana || '',
+      domainInfo.orgNameEn || '',
+      domainInfo.postal || '',
+      domainInfo.address || '',
+      domainInfo.building || '',
+      domainInfo.contactName || '',
+      domainInfo.contactRoman || '',
+      domainInfo.contactDept || '',
+      domainInfo.contactTitle || '',
+      domainInfo.contactPhone || '',
+      domainInfo.contactEmail || '',
+      domainInfo.regDate || '',
+      domainInfo.regAddress || '',
+      domainInfo.repName || '',
+      domainInfo.repRoman || '',
+      domainInfo.repTitle || '',
       s.mailLabel || s.mail || '',
       s.oldsite === 'yes' ? 'あり' : 'なし',
       answers['q-old-3'] || '',

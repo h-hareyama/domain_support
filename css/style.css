@@ -1240,6 +1240,34 @@ body.admin-page {
   letter-spacing: 0.03em;
 }
 
+.admin-info-group + .admin-info-group {
+  margin-top: 16px;
+}
+
+.admin-info-title {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  color: var(--ink);
+  border-bottom: 2px solid var(--accent-amber);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.answer-item.missing .a {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.admin-data-notice {
+  padding: 12px 14px;
+  color: var(--warn);
+  background: var(--warn-pale);
+  border: 1px solid #f0cf75;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .answer-item {
   display: grid;
   grid-template-columns: minmax(160px, 0.45fr) minmax(0, 1fr);
