@@ -264,20 +264,29 @@
           <span class="q-hint">選択内容に応じて、結果ページに必要な案内を表示します</span>
           <div class="q-options">
             <label class="q-opt">
-              <input type="radio" name="mail-service" value="sakura" />
-              <div class="q-opt-body">
-                <div class="q-opt-title">さくらのビジネスメール</div>
-                <div class="q-opt-desc">
-                  スマートエデュケーションが、メールアドレスを利用できる状態まで準備をサポートします
-                </div>
-              </div>
-            </label>
-            <label class="q-opt">
               <input type="radio" name="mail-service" value="gws" />
               <div class="q-opt-body">
                 <div class="q-opt-title">Google Workspace for Education</div>
                 <div class="q-opt-desc">
                   申請・審査には1～2か月程度かかる場合があります。お申し込み後は、園とGoogleの代理店で直接やり取りしていただきます
+                </div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="mail-service" value="self" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">自分でメールサーバを契約する</div>
+                <div class="q-opt-desc">
+                  メールサーバの契約が終わり次第、サーバの詳細情報をお知らせください
+                </div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="mail-service" value="sakura" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">さくらのビジネスメール</div>
+                <div class="q-opt-desc">
+                  スマートエデュケーションが、メールアドレスを利用できる状態までの導入をサポートします
                 </div>
               </div>
             </label>
@@ -655,29 +664,81 @@
             </p>
           </div>
           <div class="form-grid" style="margin-top: 16px">
-            <div class="field">
-              <label
-                >現在のWEB制作会社
-                <span class="badge badge-optional">わかれば</span></label
-              >
-              <span class="hint">旧HPを作った会社・サービス名</span>
-              <input
-                type="text"
-                id="redirect-web-company"
-                placeholder="例：〇〇株式会社"
-              />
+            <div class="contact-fields">
+              <div class="field">
+                <label
+                  >現在のWEB制作会社
+                  <span class="badge badge-optional">わかれば</span></label
+                >
+                <span class="hint">旧HPを作った会社・サービス名</span>
+                <input
+                  type="text"
+                  id="redirect-web-company"
+                  placeholder="例：〇〇株式会社"
+                />
+              </div>
+              <div class="contact-subgrid">
+                <div class="field">
+                  <label
+                    >電話番号
+                    <span class="badge badge-optional">任意</span></label
+                  >
+                  <input
+                    type="tel"
+                    id="redirect-web-company-phone"
+                    placeholder="例：03-XXXX-XXXX"
+                  />
+                </div>
+                <div class="field">
+                  <label
+                    >メールアドレス
+                    <span class="badge badge-optional">任意</span></label
+                  >
+                  <input
+                    type="email"
+                    id="redirect-web-company-email"
+                    placeholder="例：support@example.com"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="field">
-              <label
-                >ドメイン管理会社
-                <span class="badge badge-optional">わかれば</span></label
-              >
-              <span class="hint">現在ドメインを管理している会社・サービス</span>
-              <input
-                type="text"
-                id="redirect-domain-company"
-                placeholder="例：〇〇株式会社"
-              />
+            <div class="contact-fields">
+              <div class="field">
+                <label
+                  >ドメイン管理会社
+                  <span class="badge badge-optional">わかれば</span></label
+                >
+                <span class="hint">現在ドメインを管理している会社・サービス</span>
+                <input
+                  type="text"
+                  id="redirect-domain-company"
+                  placeholder="例：〇〇株式会社"
+                />
+              </div>
+              <div class="contact-subgrid">
+                <div class="field">
+                  <label
+                    >電話番号
+                    <span class="badge badge-optional">任意</span></label
+                  >
+                  <input
+                    type="tel"
+                    id="redirect-domain-company-phone"
+                    placeholder="例：03-XXXX-XXXX"
+                  />
+                </div>
+                <div class="field">
+                  <label
+                    >メールアドレス
+                    <span class="badge badge-optional">任意</span></label
+                  >
+                  <input
+                    type="email"
+                    id="redirect-domain-company-email"
+                    placeholder="例：support@example.com"
+                  />
+                </div>
+              </div>
             </div>
           </div>
           <div class="form-grid full" style="margin-top: 12px">
@@ -720,6 +781,14 @@
           </a>
           <p class="service-guide-note">
             公式サイトのページ上部（パソコンでは画面右上）にある「営業担当者に問い合わせる」を選んでお申し込みください。
+          </p>
+        </div>
+
+        <div class="service-guide self-managed hidden" id="s5-self-mail-panel">
+          <div class="service-guide-label">自分でメールサーバを契約する</div>
+          <h3>契約後にサーバ情報をお知らせください</h3>
+          <p>
+            メールサーバの契約が終わり次第、サーバの詳細情報をスマートエデュケーション担当者へお知らせください。
           </p>
         </div>
 

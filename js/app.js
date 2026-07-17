@@ -53,6 +53,15 @@ async function submitToFirestore() {
     mailService:   state.mail === 'new' ? state.mailService : '',
     oldsite:       state.oldsite,
     redirect:      state.redirect,
+    redirectInfo:  state.redirect === 'needed' ? {
+      webCompany:        state.redirectWebCompany,
+      webCompanyPhone:   state.redirectWebCompanyPhone,
+      webCompanyEmail:   state.redirectWebCompanyEmail,
+      domainCompany:     state.redirectDomainCompany,
+      domainCompanyPhone: state.redirectDomainCompanyPhone,
+      domainCompanyEmail: state.redirectDomainCompanyEmail,
+      tool:              state.redirectTool,
+    } : null,
     answers:       state.answers,
     status:        'pending',
     submittedAt:   firebase.firestore.FieldValue.serverTimestamp(),
@@ -86,10 +95,12 @@ const state = {
   domainName: '',
   domain: '',     // new / transfer / external
   mail: '',       // none / new / continue
-  mailService: '', // sakura / gws / undecided
+  mailService: '', // gws / self / sakura / undecided
   oldsite: '',    // yes / no
   redirect: '',   // none / needed
-  redirectWebCompany: '', redirectDomainCompany: '', redirectTool: '',
+  redirectWebCompany: '', redirectWebCompanyPhone: '', redirectWebCompanyEmail: '',
+  redirectDomainCompany: '', redirectDomainCompanyPhone: '', redirectDomainCompanyEmail: '',
+  redirectTool: '',
   answers: {},    // 動的ヒアリング項目の回答
   checked: {},    // チェック状態
   maxStep: 0,     // 到達済み最大ステップ番号
@@ -110,6 +121,7 @@ function getMailLabel(s) {
     const service = {
       sakura: 'さくらのビジネスメール',
       gws: 'Google Workspace for Education',
+      self: '自分でメールサーバを契約',
       undecided: '利用方法未定',
     }[s.mailService];
     return service ? `新規（${service}）` : '新規';
@@ -256,6 +268,7 @@ function restoreDraft() {
   isRestoringDraft = true;
   Object.assign(state, draft.state || {});
   state.answers = state.answers || {};
+  delete state.answers['q-newdom-2'];
   state.checked = state.checked || {};
   state.maxStep = Number.isFinite(draft.maxStep) ? draft.maxStep : 0;
 
@@ -304,12 +317,6 @@ const QUESTIONS = [
     why: 'ご希望のURLが取得できない場合の候補として使います',
     placeholder: '例：jiro-yochien.ed.jp, jiro.ed.jp, jiro-kindergarten.jp',
     cond: s => s.domain === 'new', type: 'textarea' },
-  { id: 'q-newdom-2', cat: 'ドメイン', required: false,
-    q: '.ed.jp取得の場合：認可証・在園証明書類',
-    why: '.ed.jpの取得には認可証などの書類が必要です',
-    placeholder: '例：認可証コピーを準備済み / 確認中',
-    cond: s => s.domain === 'new', type: 'text' },
-
   // ── ドメイン移管 ──
   { id: 'q-mov-1', cat: 'ドメイン', required: true,
     q: '現在のドメイン管理会社',
@@ -394,6 +401,16 @@ const QUESTIONS = [
     why: '旧HPの解約・転送設定の連絡先として使います',
     placeholder: '例：〇〇株式会社',
     cond: s => s.oldsite === 'yes', type: 'text' },
+  { id: 'q-old-3-phone', cat: '旧サイト', required: false,
+    q: '旧サイト管理会社の電話番号',
+    why: '旧HPの解約・転送設定について確認する際の連絡先として使います',
+    placeholder: '例：03-XXXX-XXXX',
+    cond: s => s.oldsite === 'yes', type: 'tel' },
+  { id: 'q-old-3-email', cat: '旧サイト', required: false,
+    q: '旧サイト管理会社のメールアドレス',
+    why: '旧HPの解約・転送設定について確認する際の連絡先として使います',
+    placeholder: '例：support@example.com',
+    cond: s => s.oldsite === 'yes', type: 'email' },
   { id: 'q-old-4', cat: '旧サイト', required: false,
     q: '旧サイトの維持期間',
     why: '転送設定を維持するために旧URLの契約を継続する期間を確認します',
@@ -427,9 +444,13 @@ const ORG_FIELD_MAP = [
 ];
 
 const REDIRECT_FIELD_MAP = [
-  ['redirectWebCompany',    'redirect-web-company'],
-  ['redirectDomainCompany', 'redirect-domain-company'],
-  ['redirectTool',          'redirect-tool'],
+  ['redirectWebCompany',         'redirect-web-company'],
+  ['redirectWebCompanyPhone',    'redirect-web-company-phone'],
+  ['redirectWebCompanyEmail',    'redirect-web-company-email'],
+  ['redirectDomainCompany',      'redirect-domain-company'],
+  ['redirectDomainCompanyPhone', 'redirect-domain-company-phone'],
+  ['redirectDomainCompanyEmail', 'redirect-domain-company-email'],
+  ['redirectTool',               'redirect-tool'],
 ];
 
 function syncRedirectFields() {
@@ -734,6 +755,11 @@ function generateResult(silent = false) {
     gwsPanel.classList.toggle('hidden', !(state.mail === 'new' && state.mailService === 'gws'));
   }
 
+  const selfMailPanel = document.getElementById('s5-self-mail-panel');
+  if (selfMailPanel) {
+    selfMailPanel.classList.toggle('hidden', !(state.mail === 'new' && state.mailService === 'self'));
+  }
+
   // ドメイン名ラベル＆申請フォームの表示を選択に合わせて更新
   const DLABEL = {
     new:      { label: '希望ドメイン名',   hint: '第1〜第3希望を入力してください（複数ある場合はカンマ区切りでOK）' },
@@ -791,7 +817,7 @@ function generateResult(silent = false) {
       const ph = q.placeholder || '内容を記入';
       const input = q.type === 'textarea'
         ? `<textarea data-qid="${q.id}" placeholder="${ph}" onchange="saveAnswer('${q.id}', this.value)">${state.answers[q.id] || ''}</textarea>`
-        : `<input type="text" data-qid="${q.id}" placeholder="${ph}" value="${state.answers[q.id] || ''}" onchange="saveAnswer('${q.id}', this.value)">`;
+        : `<input type="${q.type || 'text'}" data-qid="${q.id}" placeholder="${ph}" value="${state.answers[q.id] || ''}" onchange="saveAnswer('${q.id}', this.value)">`;
       html += `
         <div class="ask-item">
           <div class="ask-body">
@@ -886,7 +912,11 @@ function buildMarkdown() {
     md += `## リダイレクト情報\n\n`;
     md += `| 項目 | 内容 |\n|------|------|\n`;
     md += `| WEB制作会社 | ${state.redirectWebCompany || '—'} |\n`;
+    md += `| WEB制作会社 電話番号 | ${state.redirectWebCompanyPhone || '—'} |\n`;
+    md += `| WEB制作会社 メール | ${state.redirectWebCompanyEmail || '—'} |\n`;
     md += `| ドメイン管理会社 | ${state.redirectDomainCompany || '—'} |\n`;
+    md += `| ドメイン管理会社 電話番号 | ${state.redirectDomainCompanyPhone || '—'} |\n`;
+    md += `| ドメイン管理会社 メール | ${state.redirectDomainCompanyEmail || '—'} |\n`;
     md += `| HPツール | ${toolLabel} |\n\n`;
   }
 
@@ -1005,6 +1035,8 @@ function resetAll(askForConfirmation = true) {
   if (rdPanel2) rdPanel2.classList.add('hidden');
   const gwsPanel2 = document.getElementById('s5-gws-panel');
   if (gwsPanel2) gwsPanel2.classList.add('hidden');
+  const selfMailPanel2 = document.getElementById('s5-self-mail-panel');
+  if (selfMailPanel2) selfMailPanel2.classList.add('hidden');
   state.maxStep = 0;
   isRestoringDraft = true;
   goStep(0);

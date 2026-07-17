@@ -60,6 +60,18 @@ function normalizeRisk(value) {
   return RISK_ORDER.hasOwnProperty(value) ? value : 'low';
 }
 
+function getRedirectToolLabel(value) {
+  return {
+    jimdoo: 'ジンドゥー',
+    wix: 'Wix',
+    wordpress: 'WordPress',
+    studio: 'STUDIO',
+    amebaownd: 'Ameba Ownd',
+    google: 'Googleサイト',
+    other: 'その他・不明'
+  }[value] || value || '';
+}
+
 // -- リダイレクト結果を処理 --
 auth.getRedirectResult().then(function(result) {
   if (result && result.user) {
@@ -182,6 +194,20 @@ function renderCard(s) {
     return '<div class="answer-item"><span class="q">' + escapeHtml(label) + '</span><span class="a">' + escapeHtml(ans) + '</span></div>';
   }).filter(Boolean).join('');
 
+  var redirectInfo = s.redirectInfo && typeof s.redirectInfo === 'object' ? s.redirectInfo : {};
+  var redirectToolLabel = getRedirectToolLabel(redirectInfo.tool);
+  var redirectInfoHtml = [
+    ['WEB制作会社', redirectInfo.webCompany],
+    ['WEB制作会社 電話番号', redirectInfo.webCompanyPhone],
+    ['WEB制作会社 メール', redirectInfo.webCompanyEmail],
+    ['ドメイン管理会社', redirectInfo.domainCompany],
+    ['ドメイン管理会社 電話番号', redirectInfo.domainCompanyPhone],
+    ['ドメイン管理会社 メール', redirectInfo.domainCompanyEmail],
+    ['旧HPツール', redirectToolLabel]
+  ].filter(function(item) { return item[1]; }).map(function(item) {
+    return '<div class="answer-item"><span class="q">' + escapeHtml(item[0]) + '</span><span class="a">' + escapeHtml(item[1]) + '</span></div>';
+  }).join('');
+
   var sel = function() {
     return [
       '<option value="pending"'     + (statusClass==='pending'     ? ' selected' : '') + '>未対応</option>',
@@ -216,6 +242,7 @@ function renderCard(s) {
         '<div class="detail-row"><div class="label">リダイレクト</div><div class="value">' + (s.redirect === 'needed' ? '必要' : '不要') + '</div></div>' +
       '</div>' +
       (answerHtml ? '<div class="answers-section"><h4>ヒアリング内容</h4>' + answerHtml + '</div>' : '') +
+      (redirectInfoHtml ? '<div class="answers-section"><h4>リダイレクト連絡先</h4>' + redirectInfoHtml + '</div>' : '') +
       '<div class="memo-section">' +
         '<div class="memo-label">社内メモ</div>' +
         '<textarea class="memo-textarea" id="memo-' + escapeHtml(s.id) + '" onclick="event.stopPropagation()" onblur="saveMemo(\'' + safeId + '\', this.value)">' + memoVal + '</textarea>' +
@@ -298,9 +325,11 @@ function deleteSubmission(id, buttonEl) {
 function exportCSV() {
   var filtered = getFiltered();
   if (filtered.length === 0) { showToast('出力するデータがありません', 'error'); return; }
-  var headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','メール','旧サイト','リダイレクト','ステータス','メモ'];
+  var headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','メール','旧サイト','旧サイト管理会社','旧サイト管理会社電話','旧サイト管理会社メール','リダイレクト','WEB制作会社','WEB制作会社電話','WEB制作会社メール','ドメイン管理会社','ドメイン管理会社電話','ドメイン管理会社メール','旧HPツール','ステータス','メモ'];
   var statusMap = { pending: '未対応', in_progress: '対応中', done: '完了' };
   var rows = filtered.map(function(s) {
+    var redirectInfo = s.redirectInfo && typeof s.redirectInfo === 'object' ? s.redirectInfo : {};
+    var answers = s.answers || {};
     return [
       s.gardenName || '',
       s.directorName || '',
@@ -311,7 +340,17 @@ function exportCSV() {
       s.domainLabel || s.domain || '',
       s.mailLabel || s.mail || '',
       s.oldsite === 'yes' ? 'あり' : 'なし',
+      answers['q-old-3'] || '',
+      answers['q-old-3-phone'] || '',
+      answers['q-old-3-email'] || '',
       s.redirect === 'needed' ? '必要' : '不要',
+      redirectInfo.webCompany || '',
+      redirectInfo.webCompanyPhone || '',
+      redirectInfo.webCompanyEmail || '',
+      redirectInfo.domainCompany || '',
+      redirectInfo.domainCompanyPhone || '',
+      redirectInfo.domainCompanyEmail || '',
+      getRedirectToolLabel(redirectInfo.tool),
       statusMap[s.status] || '',
       s.memo || ''
     ];
@@ -365,6 +404,8 @@ var QID_LABELS = {
   'q-old-1':     '旧サイトURL',
   'q-old-2':     '旧サイト公開先サービス',
   'q-old-3':     '旧サイト管理会社',
+  'q-old-3-phone': '旧サイト管理会社 電話番号',
+  'q-old-3-email': '旧サイト管理会社 メール',
   'q-old-4':     '旧サイト維持期間'
 };
 

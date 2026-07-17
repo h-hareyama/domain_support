@@ -399,6 +399,19 @@ header.brand .meta {
   grid-template-columns: 1fr;
 }
 
+.contact-fields {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-subgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .field {
   display: flex;
   min-width: 0;
@@ -657,6 +670,15 @@ header.brand .meta {
   margin-top: 12px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.service-guide.self-managed {
+  background: var(--warn-pale);
+  border-left-color: var(--accent-orange);
+}
+
+.service-guide.self-managed .service-guide-label {
+  color: var(--warn);
 }
 
 .section-title {
@@ -1419,6 +1441,7 @@ code.inline {
   }
 
   .form-grid,
+  .contact-subgrid,
   .filter-bar,
   .detail-grid,
   .email-send {
