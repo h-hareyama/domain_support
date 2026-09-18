@@ -760,8 +760,8 @@
             <button class="btn btn-secondary" onclick="window.print()">
               PDF保存
             </button>
-            <button class="btn btn-submit" id="submit-btn" onclick="submitToFirestore()">
-              登録する
+            <button class="btn btn-submit" id="submit-btn" onclick="submitToGAS()">
+              この内容で送信する
             </button>
           </div>
         </div>
@@ -770,10 +770,6 @@
     <!-- /.app -->
 
     <div id="toast" class="toast"></div>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

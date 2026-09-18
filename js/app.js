@@ -1,109 +1,114 @@
 /* ═══════════════════════════════════════════
- * HP公開ドメイン判定ツール メインJS
+ * HP公開準備フォーム メインJS
  * ═══════════════════════════════════════════ */
 
 // ═══════════════════════════════════════════
-// Firebase 設定・初期化
+// 送信先の設定
 // ═══════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyCtHBzancsl1AfyTE0w7deORYMTGFfLE_w",
-  authDomain: "domain-support-54f55.firebaseapp.com",
-  projectId: "domain-support-54f55",
-  storageBucket: "domain-support-54f55.firebasestorage.app",
-  messagingSenderId: "1017898228058",
-  appId: "1:1017898228058:web:b8847317ef1ae19cc07b63",
-  measurementId: "G-X9L9MPZJN0"
-};
+// GASをウェブアプリとしてデプロイしたときに発行されるURL。
+// 「/exec」で終わるものを貼ってください（「/dev」は開発用なので不可）。
+const GAS_ENDPOINT = '';
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// GAS側のスクリプトプロパティ SHARED_TOKEN と同じ文字列。
+// 静的サイトなので誰でもソースを見れば読めます。総当たりの投稿を
+// 少し減らすためのもので、認証の代わりにはなりません。
+const SHARED_TOKEN = '';
 
 // ═══════════════════════════════════════════
-// Firestore 登録
+// 送信
 // ═══════════════════════════════════════════
-async function submitToFirestore() {
+async function submitToGAS() {
   syncAnswersFromDOM();
 
   if (!state.gardenName) {
     showToast('園名を入力してください（Step 01）', 'error');
     return;
   }
+  if (!GAS_ENDPOINT) {
+    showToast('送信先が未設定です。担当者にお問い合わせください', 'error');
+    console.error('GAS_ENDPOINT が空です。js/app.js の先頭に、GASのウェブアプリURL（/exec で終わるもの）を設定してください。');
+    return;
+  }
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = '登録中...';
+  btn.textContent = '送信中...';
 
   const risk = calcRisk(state);
-  const pid  = patternId(state);
-  const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
-  const mailLabel   = getMailLabel(state);
+  const domainLabel = { new: '新規取得', transfer: '移管', external: '他社管理継続' }[state.domain] || '—';
 
   const payload = {
+    token:         SHARED_TOKEN,
     gardenName:    state.gardenName,
     directorName:  state.directorName,
     domainName:    state.domainName,
-    patternId:     pid,
+    patternId:     patternId(state),
     riskLevel:     risk.level,
     riskLabel:     risk.label,
     domain:        state.domain,
     domainLabel:   domainLabel,
     domainApplicationInfo: state.domain === 'new' ? {
-      orgType:        state.newOrgType,
-      orgLicensed:    state.newOrgLicensed,
-      orgName:        state.newOrgName,
-      orgKana:        state.newOrgKana,
-      orgNameEn:      state.newOrgNameEn,
-      postal:         state.newPostal,
-      address:        state.newAddress,
-      building:       state.newBuilding,
-      contactName:    state.newContactName,
-      contactRoman:   state.newContactRoman,
-      contactDept:    state.newContactDept,
-      contactTitle:   state.newContactTitle,
-      contactPhone:   state.newContactPhone,
-      contactEmail:   state.newContactEmail,
-      regDate:        state.newRegDate,
-      regAddress:     state.newRegAddress,
-      repName:        state.newRepName,
-      repRoman:       state.newRepRoman,
-      repTitle:       state.newRepTitle,
+      orgType:      state.newOrgType,
+      orgLicensed:  state.newOrgLicensed,
+      orgName:      state.newOrgName,
+      orgKana:      state.newOrgKana,
+      orgNameEn:    state.newOrgNameEn,
+      postal:       state.newPostal,
+      address:      state.newAddress,
+      building:     state.newBuilding,
+      contactName:  state.newContactName,
+      contactRoman: state.newContactRoman,
+      contactDept:  state.newContactDept,
+      contactTitle: state.newContactTitle,
+      contactPhone: state.newContactPhone,
+      contactEmail: state.newContactEmail,
+      regDate:      state.newRegDate,
+      regAddress:   state.newRegAddress,
+      repName:      state.newRepName,
+      repRoman:     state.newRepRoman,
+      repTitle:     state.newRepTitle,
     } : null,
     mail:          state.mail,
-    mailLabel:     mailLabel,
+    mailLabel:     getMailLabel(state),
     mailWant:      state.mail === 'not_using' ? state.mailWant : '',
     oldsite:       state.oldsite,
     redirect:      state.redirect,
     redirectInfo:  state.redirect === 'needed' ? {
-      webCompany:        state.redirectWebCompany,
-      webCompanyPhone:   state.redirectWebCompanyPhone,
-      webCompanyEmail:   state.redirectWebCompanyEmail,
-      domainCompany:     state.redirectDomainCompany,
+      webCompany:         state.redirectWebCompany,
+      webCompanyPhone:    state.redirectWebCompanyPhone,
+      webCompanyEmail:    state.redirectWebCompanyEmail,
+      domainCompany:      state.redirectDomainCompany,
       domainCompanyPhone: state.redirectDomainCompanyPhone,
       domainCompanyEmail: state.redirectDomainCompanyEmail,
-      tool:              state.redirectTool,
+      tool:               state.redirectTool,
     } : null,
     answers:       state.answers,
-    status:        'pending',
-    submittedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt:     firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   try {
-    const docRef = await db.collection('submissions').add(payload);
-    showToast('登録しました！担当者に通知されます', 'success');
-    btn.textContent = '登録済み ✓';
+    // Content-Type を付けないことで、ブラウザが事前確認（プリフライト）を
+    // 飛ばさなくなる。GASはプリフライトに応答できないため、これが必要。
+    const res  = await fetch(GAS_ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      redirect: 'follow',
+    });
+    const data = await res.json();
+
+    if (!data.ok) throw new Error(data.error || '受付側でエラーが発生しました');
+
+    showToast('送信しました（受付番号 ' + data.receiptNo + '）', 'success');
+    btn.textContent = '送信済み ✓';
     btn.style.background = 'var(--ok)';
     clearDraft();
-    console.log('登録ID:', docRef.id);
+    console.log('受付番号:', data.receiptNo);
   } catch (err) {
-    console.error(err);
-    showToast('登録に失敗しました。時間をおいて再度お試しください', 'error');
+    console.error('送信に失敗しました:', err);
+    showToast('送信に失敗しました。時間をおいて再度お試しください', 'error');
     btn.disabled = false;
-    btn.textContent = 'この内容で登録する';
+    btn.textContent = 'この内容で送信する';
   }
 }
-
-
 
 // ═══════════════════════════════════════════
 // 状態管理
