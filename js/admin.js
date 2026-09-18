@@ -323,7 +323,7 @@ function renderCard(s) {
         '<span class="meta-tag">' + escapeHtml(s.domainLabel || s.domain || '-') + '</span>' +
         '<span class="meta-tag">メール: ' + escapeHtml(s.mailLabel || s.mail || '-') + '</span>' +
         '<span class="meta-tag">担当: ' + escapeHtml(s.directorName || '-') + '</span>' +
-        '<span class="meta-tag">公開希望: ' + escapeHtml(s.publishDate || '-') + '</span>' +
+        (s.publishDate ? '<span class="meta-tag">公開希望: ' + escapeHtml(s.publishDate) + '</span>' : '') +
         '<span class="risk-tag ' + riskClass + '">' + escapeHtml(s.riskLabel || '-') + '</span>' +
       '</div>' +
       '<select class="status-select ' + statusClass + '" onclick="event.stopPropagation()" onchange="updateStatus(\'' + safeId + '\', this)">' +
@@ -335,12 +335,12 @@ function renderCard(s) {
       '<div class="detail-grid">' +
         '<div class="detail-row"><div class="label">パターンID</div><div class="value">' + escapeHtml(s.patternId || '-') + '</div></div>' +
         '<div class="detail-row"><div class="label">ドメイン名</div><div class="value">' + escapeHtml(s.domainName || '-') + '</div></div>' +
-        '<div class="detail-row"><div class="label">旧サイト</div><div class="value">' + (s.oldsite === 'yes' ? 'あり' : 'なし') + '</div></div>' +
-        '<div class="detail-row"><div class="label">リダイレクト</div><div class="value">' + (s.redirect === 'needed' ? '必要' : '不要') + '</div></div>' +
+        '<div class="detail-row"><div class="label">現在公開中のHP</div><div class="value">' + (s.oldsite === 'yes' ? 'あり' : 'なし') + '</div></div>' +
+        '<div class="detail-row"><div class="label">新HPへのご案内</div><div class="value">' + (s.redirect === 'needed' ? '実施' : '不要') + '</div></div>' +
       '</div>' +
       domainApplicationHtml +
       (answerHtml ? '<div class="answers-section"><h4>ヒアリング内容</h4>' + answerHtml + '</div>' : '') +
-      (redirectInfoHtml ? '<div class="answers-section"><h4>リダイレクト連絡先</h4>' + redirectInfoHtml + '</div>' : '') +
+      (redirectInfoHtml ? '<div class="answers-section"><h4>ご案内設定の連絡先</h4>' + redirectInfoHtml + '</div>' : '') +
       '<div class="memo-section">' +
         '<div class="memo-label">社内メモ</div>' +
         '<textarea class="memo-textarea" id="memo-' + escapeHtml(s.id) + '" onclick="event.stopPropagation()" onblur="saveMemo(\'' + safeId + '\', this.value)">' + memoVal + '</textarea>' +
@@ -423,7 +423,7 @@ function deleteSubmission(id, buttonEl) {
 function exportCSV() {
   var filtered = getFiltered();
   if (filtered.length === 0) { showToast('出力するデータがありません', 'error'); return; }
-  var headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','法人種類','認可','組織名','組織名読み','英語表記','郵便番号','住所','建物名','登録担当者氏名','登録担当者ローマ字','部署','役職','担当者電話','担当者メール','登記年月日','登記地住所','代表者氏名','代表者ローマ字','代表者役職','メール','旧サイト','旧サイト管理会社','旧サイト管理会社電話','旧サイト管理会社メール','リダイレクト','WEB制作会社','WEB制作会社電話','WEB制作会社メール','ドメイン管理会社','ドメイン管理会社電話','ドメイン管理会社メール','旧HPツール','ステータス','メモ'];
+  var headers = ['園名','担当','公開希望日','提出日','パターンID','リスク','ドメイン','法人種類','認可','組織名','組織名読み','英語表記','郵便番号','住所','建物名','登録担当者氏名','登録担当者ローマ字','部署','役職','担当者電話','担当者メール','登記年月日','登記地住所','代表者氏名','代表者ローマ字','代表者役職','メール','現在公開中のHP','現在のHP制作・管理会社','制作・管理会社電話','制作・管理会社メール','新HPへのご案内','WEB制作会社','WEB制作会社電話','WEB制作会社メール','ドメイン管理会社','ドメイン管理会社電話','ドメイン管理会社メール','現在のHPのツール','ステータス','メモ'];
   var statusMap = { pending: '未対応', in_progress: '対応中', done: '完了' };
   var rows = filtered.map(function(s) {
     var redirectInfo = s.redirectInfo && typeof s.redirectInfo === 'object' ? s.redirectInfo : {};
@@ -461,7 +461,7 @@ function exportCSV() {
       answers['q-old-3'] || '',
       answers['q-old-3-phone'] || '',
       answers['q-old-3-email'] || '',
-      s.redirect === 'needed' ? '必要' : '不要',
+      s.redirect === 'needed' ? '実施' : '不要',
       redirectInfo.webCompany || '',
       redirectInfo.webCompanyPhone || '',
       redirectInfo.webCompanyEmail || '',
@@ -503,28 +503,30 @@ function getFiltered() {
 
 // -- 質問ID -> ラベル対応表 --
 var QID_LABELS = {
-  'q-www':       'URLにwwwを付けるか',
-  'q-newdom-1':  '希望ドメイン候補',
-  'q-newdom-2':  '.ed.jp書類',
-  'q-mov-1':     '現在のドメイン管理会社',
-  'q-mov-2':     'AuthCode取得状況',
-  'q-mov-3':     'ドメイン有効期限',
-  'q-mov-4':     '移管ロック状況',
-  'q-ext-1':     'ドメイン管理会社',
-  'q-ext-2':     '管理会社連絡窓口',
-  'q-ext-3':     '管理画面ログイン',
-  'q-mailnew-1': '必要メールアドレス数',
-  'q-mailnew-2': 'アドレス命名希望',
-  'q-mailnew-3': '教育機関認証書類',
-  'q-mailcon-1': '現在のメールサービス名',
-  'q-mailcon-2': 'メール契約会社名',
-  'q-mailcon-5x': 'メール補足',
-  'q-old-1':     '旧サイトURL',
-  'q-old-2':     '旧サイト公開先サービス',
-  'q-old-3':     '旧サイト管理会社',
-  'q-old-3-phone': '旧サイト管理会社 電話番号',
-  'q-old-3-email': '旧サイト管理会社 メール',
-  'q-old-4':     '旧サイト維持期間'
+  'q-www':          'URLにwwwを付けるか',
+  'q-newdom-1':     '希望ドメイン候補',
+  'q-newdom-2':     '.ed.jp書類',
+  'q-mov-1':        '現在のドメイン管理会社',
+  'q-mov-2':        'AuthCode取得状況',
+  'q-mov-3':        'ドメイン有効期限',
+  'q-mov-4':        '移管ロック状況',
+  'q-ext-1':        'ドメイン管理会社',
+  'q-ext-2':        '管理会社連絡窓口',
+  'q-ext-3':        '管理画面ログイン',
+  'q-mailcon-1':    '現在のメールサービス名',
+  'q-mailcon-2':    'メール契約会社名',
+  'q-mailcon-3':    '現在のメールアドレス',
+  'q-mailcon-5x':   'メール補足',
+  'q-old-1':        '現在のHPのURL',
+  'q-old-2':        '現在のHPの公開先サービス',
+  'q-old-3':        '現在のHPの制作・管理会社',
+  'q-old-3-phone':  '制作・管理会社の電話番号',
+  'q-old-3-email':  '制作・管理会社のメールアドレス',
+  'q-old-4':        '現在のHPを残せる期間',
+  // 過去データ用（現在のフォームでは使っていません）
+  'q-mailnew-1':    '必要メールアドレス数（旧）',
+  'q-mailnew-2':    'アドレス命名希望（旧）',
+  'q-mailnew-3':    '教育機関認証書類（旧）'
 };
 
 // -- フィルター・ボタンのイベント --

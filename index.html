@@ -106,7 +106,7 @@
               <line x1="12" y1="17" x2="12" y2="21" />
             </svg>
           </div>
-          <div class="step-text"><span class="num">04</span>旧サイト</div>
+          <div class="step-text"><span class="num">04</span>現在のHP</div>
         </div>
         <div class="step" data-step="4">
           <div class="step-icon">
@@ -157,10 +157,6 @@
           <div class="field">
             <label>担当ディレクター</label>
             <input type="text" id="director-name" placeholder="例：佐藤" />
-          </div>
-          <div class="field">
-            <label>HP公開希望日</label>
-            <input type="date" id="publish-date" />
           </div>
         </div>
         <div class="nav">
@@ -223,99 +219,94 @@
       <div class="panel hidden" id="step-2">
         <div class="panel-head">
           <div class="eyebrow">Step 03 / 05</div>
-          <h2>メールはどう使いますか？</h2>
+          <h2>メールについて</h2>
           <p class="desc">
-            「info@〇〇.ed.jp」のように、HPと同じURLを使ったメールアドレスについてです。
+            ホームページと同じドメインのメールアドレスについてお伺いします。わからない場合は「わからない」を選んでいただいて構いません。
           </p>
         </div>
         <div class="q-group">
+          <label class="q-label"
+            >現在、ホームページと同じドメインのメールアドレスを利用していますか？</label
+          >
+          <span class="q-hint"
+            >例：ホームページが「〇〇.ed.jp」→ メールが「info@〇〇.ed.jp」など</span
+          >
           <div class="q-options">
             <label class="q-opt">
-              <input type="radio" name="mail" value="continue" />
+              <input type="radio" name="mail" value="using" />
               <div class="q-opt-body">
-                <div class="q-opt-title">既存のメールをそのまま使う</div>
+                <div class="q-opt-title">利用している</div>
                 <div class="q-opt-desc">
-                  現在お使いのメールアドレスをそのまま継続して使う
+                  ホームページと同じドメインのメールアドレスを、現在お使いです
                 </div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="mail" value="none" />
+              <input type="radio" name="mail" value="not_using" />
               <div class="q-opt-body">
-                <div class="q-opt-title">メールは使わない</div>
+                <div class="q-opt-title">利用していない</div>
                 <div class="q-opt-desc">
-                  HPのみを公開する。メールアドレスは作成しない
+                  Gmailなどのフリーメールや、別のドメインのメールアドレスをお使いです
                 </div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="mail" value="new" />
+              <input type="radio" name="mail" value="unknown" />
               <div class="q-opt-body">
-                <div class="q-opt-title">新規でメールを始める</div>
+                <div class="q-opt-title">わからない</div>
                 <div class="q-opt-desc">
-                  HPと同じURLのメールアドレスを新たに作成する（例：info@〇〇.ed.jp）
+                  こちらで確認いたしますので、そのままお進みください
                 </div>
               </div>
             </label>
           </div>
         </div>
-        <div class="q-group hidden" id="mail-service-group">
-          <label class="q-label">新規メールの利用方法を選んでください</label>
-          <span class="q-hint">選択内容に応じて、結果ページに必要な案内を表示します</span>
+        <div class="q-group hidden" id="mail-want-group">
+          <label class="q-label"
+            >今後、ホームページと同じドメインのメールアドレスを利用したいですか？</label
+          >
           <div class="q-options">
             <label class="q-opt">
-              <input type="radio" name="mail-service" value="gws" />
+              <input type="radio" name="mail-want" value="yes" />
               <div class="q-opt-body">
-                <div class="q-opt-title">Google Workspace for Education</div>
-                <div class="q-opt-desc">
-                  申請・審査には1～2か月程度かかる場合があります。お申し込み後は、園とGoogleの代理店で直接やり取りしていただきます
-                </div>
+                <div class="q-opt-title">利用したい</div>
+                <div class="q-opt-desc">今後ドメインのメールに切り替えたい</div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="mail-service" value="self" />
+              <input type="radio" name="mail-want" value="no" />
               <div class="q-opt-body">
-                <div class="q-opt-title">自分でメールサーバを契約する</div>
-                <div class="q-opt-desc">
-                  メールサーバの契約が終わり次第、サーバの詳細情報をお知らせください
-                </div>
+                <div class="q-opt-title">利用しない</div>
+                <div class="q-opt-desc">今のメールアドレスを使い続ける</div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="mail-service" value="sakura" />
+              <input type="radio" name="mail-want" value="considering" />
               <div class="q-opt-body">
-                <div class="q-opt-title">さくらのビジネスメール</div>
-                <div class="q-opt-desc">
-                  スマートエデュケーションが、メールアドレスを利用できる状態までの導入をサポートします
-                </div>
-              </div>
-            </label>
-            <label class="q-opt">
-              <input type="radio" name="mail-service" value="undecided" />
-              <div class="q-opt-body">
-                <div class="q-opt-title">まだ決まっていない</div>
-                <div class="q-opt-desc">
-                  利用方法をこれから検討する
-                </div>
+                <div class="q-opt-title">検討中</div>
+                <div class="q-opt-desc">まだ決めていない</div>
               </div>
             </label>
           </div>
+          <p class="q-note">
+            ドメインのメールをご利用になる場合、別途メールサービスのご契約が必要です。メールサービスの契約、メールアカウントの管理、パソコンやスマートフォンへの設定は園さまで行っていただきます。スマートエデュケーションでは、ホームページ公開・ドメイン移管に必要な設定を対応いたします。
+          </p>
         </div>
         <div class="nav">
           <button class="btn btn-secondary" onclick="goStep(1)">← 戻る</button>
           <button class="btn btn-primary" onclick="goStep(3)">
-            次へ：旧サイト →
+            次へ：現在のホームページ →
           </button>
         </div>
       </div>
 
-      <!-- STEP 4: 旧サイト -->
+      <!-- STEP 4: 現在のホームページ -->
       <div class="panel hidden" id="step-3">
         <div class="panel-head">
           <div class="eyebrow">Step 04 / 05</div>
-          <h2>旧サイトはありますか？</h2>
+          <h2>現在公開中のホームページはありますか？</h2>
           <p class="desc">
-            現在すでに公開しているホームページがある場合は「あり」を選んでください。
+            すでに公開しているホームページがある場合は「ある」を選んでください。
           </p>
         </div>
         <div class="q-group">
@@ -323,41 +314,41 @@
             <label class="q-opt">
               <input type="radio" name="oldsite" value="yes" />
               <div class="q-opt-body">
-                <div class="q-opt-title">あり</div>
-                <div class="q-opt-desc">現在公開しているHPがある</div>
+                <div class="q-opt-title">ある</div>
+                <div class="q-opt-desc">現在公開しているホームページがあります</div>
               </div>
             </label>
             <label class="q-opt">
               <input type="radio" name="oldsite" value="no" />
               <div class="q-opt-body">
-                <div class="q-opt-title">なし</div>
-                <div class="q-opt-desc">はじめてHPを公開する</div>
+                <div class="q-opt-title">ない</div>
+                <div class="q-opt-desc">はじめてホームページを公開します</div>
               </div>
             </label>
           </div>
         </div>
         <div class="q-group hidden" id="redirect-group">
           <label class="q-label"
-            >古いHPのURLから新しいHPへの「転送設定」はご希望ですか？</label
+            >現在のホームページを見に来た方を、新しいホームページへ自動でご案内します</label
           >
           <span class="q-hint"
-            >古いURLにアクセスした人を新しいHPへ自動で案内する「転送設定」のことです</span
+            >検索サイトからの評価や、これまで共有されたURLをできるだけ引き継ぐため、原則として実施します。必要に応じて、現在の管理会社様へのご依頼が発生します。費用が発生する場合は事前にご案内します。</span
           >
           <div class="q-options">
             <label class="q-opt">
-              <input type="radio" name="redirect" value="none" />
+              <input type="radio" name="redirect" value="needed" />
               <div class="q-opt-body">
-                <div class="q-opt-title">不要</div>
-                <div class="q-opt-desc">転送設定は行わない</div>
+                <div class="q-opt-title">原則どおり実施する</div>
+                <div class="q-opt-desc">
+                  現在のホームページを見に来た方を、新しいホームページへ自動でご案内します
+                </div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="redirect" value="needed" />
+              <input type="radio" name="redirect" value="none" />
               <div class="q-opt-body">
-                <div class="q-opt-title">必要</div>
-                <div class="q-opt-desc">
-                  古いURLへのアクセスを新しいHPに自動で転送したい
-                </div>
+                <div class="q-opt-title">ご案内は不要</div>
+                <div class="q-opt-desc">自動でのご案内は行いません</div>
               </div>
             </label>
           </div>
@@ -655,12 +646,12 @@
           </div>
         </div>
 
-        <!-- リダイレクト情報入力（リダイレクト必要の場合のみ表示） -->
+        <!-- ご案内設定に必要な情報（実施する場合のみ表示） -->
         <div class="panel hidden" id="s5-redirect-panel" style="margin: 20px 0">
           <div class="panel-head">
-            <div class="eyebrow">リダイレクト情報</div>
+            <div class="eyebrow">ご案内設定に必要な情報</div>
             <p class="desc" style="margin: 4px 0 0">
-              旧HPからの転送設定のために必要な情報です。わかる範囲で入力してください。
+              現在のホームページから新しいホームページへご案内するために必要な情報です。わかる範囲で入力してください。
             </p>
           </div>
           <div class="form-grid" style="margin-top: 16px">
@@ -670,7 +661,7 @@
                   >現在のWEB制作会社
                   <span class="badge badge-optional">わかれば</span></label
                 >
-                <span class="hint">旧HPを作った会社・サービス名</span>
+                <span class="hint">現在のホームページを作った会社・サービス名</span>
                 <input
                   type="text"
                   id="redirect-web-company"
@@ -744,10 +735,10 @@
           <div class="form-grid full" style="margin-top: 12px">
             <div class="field">
               <label
-                >旧HPを作ったツール・サービス
+                >現在のホームページを作ったツール・サービス
                 <span class="badge badge-optional">わかれば</span></label
               >
-              <span class="hint">リダイレクト設定の可否に影響します</span>
+              <span class="hint">ご案内設定ができるかどうかに影響します</span>
               <select id="redirect-tool">
                 <option value="">わからない場合は空欄でOK</option>
                 <option value="jimdoo">ジンドゥー (Jimdo)</option>
@@ -760,36 +751,6 @@
               </select>
             </div>
           </div>
-        </div>
-
-        <div class="service-guide hidden" id="s5-gws-panel">
-          <div class="service-guide-label">Google Workspace for Education</div>
-          <h3>園からGoogleの代理店へ直接お申し込みください</h3>
-          <p>
-            申請・審査には1～2か月程度かかる場合があります。審査状況により期間は前後します。
-          </p>
-          <p>
-            お申し込み後は、園とGoogleの代理店で直接やり取りしていただきます。弊社では申請状況の確認や手続きの代行は行いません。
-          </p>
-          <a
-            class="service-guide-link"
-            href="https://edu.google.com/intl/ALL_jp/workspace-for-education/editions/overview/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Google Workspace for Education 公式サイトを開く
-          </a>
-          <p class="service-guide-note">
-            公式サイトのページ上部（パソコンでは画面右上）にある「営業担当者に問い合わせる」を選んでお申し込みください。
-          </p>
-        </div>
-
-        <div class="service-guide self-managed hidden" id="s5-self-mail-panel">
-          <div class="service-guide-label">自分でメールサーバを契約する</div>
-          <h3>契約後にサーバ情報をお知らせください</h3>
-          <p>
-            メールサーバの契約が終わり次第、サーバの詳細情報をスマートエデュケーション担当者へお知らせください。
-          </p>
         </div>
 
         <div class="result-body" id="result-body"></div>

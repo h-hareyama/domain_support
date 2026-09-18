@@ -1667,3 +1667,14 @@ code.inline {
     box-shadow: none;
   }
 }
+
+.q-note {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: var(--brand-pale, #e7eff7);
+  border-left: 3px solid var(--brand, #197fc5);
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--muted, #64748b);
+}
