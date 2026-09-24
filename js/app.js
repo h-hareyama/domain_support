@@ -7,12 +7,12 @@
 // ═══════════════════════════════════════════
 // GASをウェブアプリとしてデプロイしたときに発行されるURL。
 // 「/exec」で終わるものを貼ってください（「/dev」は開発用なので不可）。
-const GAS_ENDPOINT = '';
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxpjUqE54xlwZAMtT9EYdQi0VbQG4-56tq73KCmCuo2P6gRF_Dqertgf2tOnTh8XDIz3g/exec';
 
 // GAS側のスクリプトプロパティ SHARED_TOKEN と同じ文字列。
 // 静的サイトなので誰でもソースを見れば読めます。総当たりの投稿を
 // 少し減らすためのもので、認証の代わりにはなりません。
-const SHARED_TOKEN = '';
+const SHARED_TOKEN = 'promo-domain-2026';
 
 // ═══════════════════════════════════════════
 // 送信
