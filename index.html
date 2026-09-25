@@ -62,12 +62,10 @@
             >
               <circle cx="12" cy="12" r="10" />
               <line x1="2" y1="12" x2="22" y2="12" />
-              <path
-                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
-              />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
             </svg>
           </div>
-          <div class="step-text"><span class="num">02</span>ドメイン</div>
+          <div class="step-text"><span class="num">02</span>ホームページ</div>
         </div>
         <div class="step" data-step="2">
           <div class="step-icon">
@@ -81,34 +79,13 @@
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <path
-                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-              />
+              <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
               <polyline points="22,6 12,13 2,6" />
             </svg>
           </div>
           <div class="step-text"><span class="num">03</span>メール</div>
         </div>
         <div class="step" data-step="3">
-          <div class="step-icon">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-          </div>
-          <div class="step-text"><span class="num">04</span>現在のHP</div>
-        </div>
-        <div class="step" data-step="4">
           <div class="step-icon">
             <svg
               width="14"
@@ -129,17 +106,17 @@
               <polyline points="10 9 9 9 8 9" />
             </svg>
           </div>
-          <div class="step-text"><span class="num">05</span>結果シート</div>
+          <div class="step-text"><span class="num">04</span>確認・送信</div>
         </div>
       </div>
 
       <!-- STEP 1: 園の基本 -->
       <div class="panel" id="step-0">
         <div class="panel-head">
-          <div class="eyebrow">Step 01 / 05</div>
+          <div class="eyebrow">Step 01 / 04</div>
           <h2>園の基本情報</h2>
           <p class="desc">
-            貴園のホームページ制作に必要な基本情報を入力してください。わからない項目は空欄のまま次に進んでいただいて構いません。
+            はじめに、園のお名前とご担当者をお伺いします。
           </p>
         </div>
         <div class="form-grid full">
@@ -162,51 +139,112 @@
         <div class="nav">
           <span></span>
           <button class="btn btn-primary" onclick="goStep(1)">
-            次へ：ドメイン →
+            次へ：ホームページ →
           </button>
         </div>
       </div>
 
-      <!-- STEP 2: ドメイン（選択のみ） -->
+      <!-- STEP 2: ホームページとURL -->
       <div class="panel hidden" id="step-1">
         <div class="panel-head">
-          <div class="eyebrow">Step 02 / 05</div>
-          <h2>ドメインはどうしますか？</h2>
+          <div class="eyebrow">Step 02 / 04</div>
+          <h2>ホームページについて</h2>
           <p class="desc">
-            ホームページのURL（ドメイン）の管理方法について、現在の状況に一番近いものを選んでください。わからない場合はスマートエデュケーションの担当者にご確認ください。
+            現在の状況を教えてください。どのような手続きが必要かは、いただいた内容をもとにスマートエデュケーションで判断し、ご案内します。
           </p>
         </div>
+
         <div class="q-group">
+          <label class="q-label">現在、公開中のホームページはありますか？</label>
           <div class="q-options">
             <label class="q-opt">
-              <input type="radio" name="domain" value="new" />
+              <input type="radio" name="oldsite" value="yes" />
               <div class="q-opt-body">
-                <div class="q-opt-title">新規取得</div>
-                <div class="q-opt-desc">
-                  新しいURLを取得してホームページを公開する（はじめてHPを開設する場合など）
-                </div>
+                <div class="q-opt-title">ある</div>
+                <div class="q-opt-desc">すでに公開しているホームページがあります</div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="domain" value="transfer" />
+              <input type="radio" name="oldsite" value="no" />
               <div class="q-opt-body">
-                <div class="q-opt-title">移管（弊社管理に切り替え）</div>
-                <div class="q-opt-desc">
-                  現在のURLをそのまま引き継いで使う（URL管理をスマートエデュケーションに切り替える）
-                </div>
+                <div class="q-opt-title">ない</div>
+                <div class="q-opt-desc">はじめてホームページを公開します</div>
               </div>
             </label>
             <label class="q-opt">
-              <input type="radio" name="domain" value="external" />
+              <input type="radio" name="oldsite" value="unknown" />
               <div class="q-opt-body">
-                <div class="q-opt-title">他社管理を継続</div>
-                <div class="q-opt-desc">
-                  現在のURLをそのまま使い、URL管理会社も変更しない
-                </div>
+                <div class="q-opt-title">わからない</div>
+                <div class="q-opt-desc">こちらで確認いたしますので、そのままお進みください</div>
               </div>
             </label>
           </div>
         </div>
+
+        <div class="q-group hidden" id="urlpolicy-group">
+          <label class="q-label"
+            >新しいホームページのURLは、今と同じものを使いたいですか？</label
+          >
+          <span class="q-hint"
+            >例：いまのURLが「〇〇.ed.jp」なら、新しいホームページも同じ「〇〇.ed.jp」で公開する</span
+          >
+          <div class="q-options">
+            <label class="q-opt">
+              <input type="radio" name="urlpolicy" value="same" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">今と同じURLを使いたい</div>
+                <div class="q-opt-desc">
+                  これまで案内してきたURLをそのまま使い続けます
+                </div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="urlpolicy" value="new" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">新しいURLにしたい</div>
+                <div class="q-opt-desc">この機会にURLを変更します</div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="urlpolicy" value="undecided" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">おまかせ・まだ決めていない</div>
+                <div class="q-opt-desc">相談しながら決めたいです</div>
+              </div>
+            </label>
+          </div>
+          <p class="q-note">
+            URLの引き継ぎに必要な手続き（管理会社への依頼など）は、スマートエデュケーションで判断してご案内します。園さまで手続きの種類を選んでいただく必要はありません。
+          </p>
+        </div>
+
+        <div class="q-group hidden" id="redirect-group">
+          <label class="q-label"
+            >現在のホームページを見に来た方を、新しいホームページへ自動でご案内します</label
+          >
+          <span class="q-hint"
+            >検索サイトからの評価や、これまで共有されたURLをできるだけ引き継ぐため、原則として実施します。必要に応じて、現在の管理会社様へのご依頼が発生します。費用が発生する場合は事前にご案内します。</span
+          >
+          <div class="q-options">
+            <label class="q-opt">
+              <input type="radio" name="redirect" value="needed" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">原則どおり実施する</div>
+                <div class="q-opt-desc">
+                  現在のホームページを見に来た方を、新しいホームページへ自動でご案内します
+                </div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="redirect" value="none" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">ご案内は不要</div>
+                <div class="q-opt-desc">自動でのご案内は行いません</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <div class="nav">
           <button class="btn btn-secondary" onclick="goStep(0)">← 戻る</button>
           <button class="btn btn-primary" onclick="goStep(2)">
@@ -218,12 +256,13 @@
       <!-- STEP 3: メール -->
       <div class="panel hidden" id="step-2">
         <div class="panel-head">
-          <div class="eyebrow">Step 03 / 05</div>
+          <div class="eyebrow">Step 03 / 04</div>
           <h2>メールについて</h2>
           <p class="desc">
             ホームページと同じドメインのメールアドレスについてお伺いします。わからない場合は「わからない」を選んでいただいて構いません。
           </p>
         </div>
+
         <div class="q-group">
           <label class="q-label"
             >現在、ホームページと同じドメインのメールアドレスを利用していますか？</label
@@ -261,6 +300,39 @@
             </label>
           </div>
         </div>
+
+        <div class="q-group hidden" id="mail-keep-group">
+          <label class="q-label"
+            >新しいホームページの公開後も、今のメールアドレスをそのままお使いになりますか？</label
+          >
+          <div class="q-options">
+            <label class="q-opt">
+              <input type="radio" name="mail-keep" value="keep" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">そのまま使いたい</div>
+                <div class="q-opt-desc">今のメールアドレスを変えずに使い続けます</div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="mail-keep" value="change" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">この機会に変えたい</div>
+                <div class="q-opt-desc">新しいメールアドレスに切り替えます</div>
+              </div>
+            </label>
+            <label class="q-opt">
+              <input type="radio" name="mail-keep" value="unknown" />
+              <div class="q-opt-body">
+                <div class="q-opt-title">わからない・相談したい</div>
+                <div class="q-opt-desc">どうするのがよいか相談しながら決めたいです</div>
+              </div>
+            </label>
+          </div>
+          <p class="q-note">
+            メールを止めずに引き継ぐための設定は、スマートエデュケーションで対応します。メールサービスのご契約先に確認をお願いする場合があります。
+          </p>
+        </div>
+
         <div class="q-group hidden" id="mail-want-group">
           <label class="q-label"
             >今後、ホームページと同じドメインのメールアドレスを利用したいですか？</label
@@ -289,80 +361,20 @@
             </label>
           </div>
           <p class="q-note">
-            ドメインのメールをご利用になる場合、別途メールサービスのご契約が必要です。メールサービスの契約、メールアカウントの管理、パソコンやスマートフォンへの設定は園さまで行っていただきます。スマートエデュケーションでは、ホームページ公開・ドメイン移管に必要な設定を対応いたします。
+            ドメインのメールをご利用になる場合、別途メールサービスのご契約が必要です。メールサービスの契約、メールアカウントの管理、パソコンやスマートフォンへの設定は園さまで行っていただきます。スマートエデュケーションでは、ホームページ公開・URLの引き継ぎに必要な設定を対応いたします。
           </p>
         </div>
+
         <div class="nav">
           <button class="btn btn-secondary" onclick="goStep(1)">← 戻る</button>
-          <button class="btn btn-primary" onclick="goStep(3)">
-            次へ：現在のホームページ →
-          </button>
-        </div>
-      </div>
-
-      <!-- STEP 4: 現在のホームページ -->
-      <div class="panel hidden" id="step-3">
-        <div class="panel-head">
-          <div class="eyebrow">Step 04 / 05</div>
-          <h2>現在公開中のホームページはありますか？</h2>
-          <p class="desc">
-            すでに公開しているホームページがある場合は「ある」を選んでください。
-          </p>
-        </div>
-        <div class="q-group">
-          <div class="q-options">
-            <label class="q-opt">
-              <input type="radio" name="oldsite" value="yes" />
-              <div class="q-opt-body">
-                <div class="q-opt-title">ある</div>
-                <div class="q-opt-desc">現在公開しているホームページがあります</div>
-              </div>
-            </label>
-            <label class="q-opt">
-              <input type="radio" name="oldsite" value="no" />
-              <div class="q-opt-body">
-                <div class="q-opt-title">ない</div>
-                <div class="q-opt-desc">はじめてホームページを公開します</div>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div class="q-group hidden" id="redirect-group">
-          <label class="q-label"
-            >現在のホームページを見に来た方を、新しいホームページへ自動でご案内します</label
-          >
-          <span class="q-hint"
-            >検索サイトからの評価や、これまで共有されたURLをできるだけ引き継ぐため、原則として実施します。必要に応じて、現在の管理会社様へのご依頼が発生します。費用が発生する場合は事前にご案内します。</span
-          >
-          <div class="q-options">
-            <label class="q-opt">
-              <input type="radio" name="redirect" value="needed" />
-              <div class="q-opt-body">
-                <div class="q-opt-title">原則どおり実施する</div>
-                <div class="q-opt-desc">
-                  現在のホームページを見に来た方を、新しいホームページへ自動でご案内します
-                </div>
-              </div>
-            </label>
-            <label class="q-opt">
-              <input type="radio" name="redirect" value="none" />
-              <div class="q-opt-body">
-                <div class="q-opt-title">ご案内は不要</div>
-                <div class="q-opt-desc">自動でのご案内は行いません</div>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div class="nav">
-          <button class="btn btn-secondary" onclick="goStep(2)">← 戻る</button>
           <button class="btn btn-primary" onclick="generateResult()">
-            結果を見る →
+            次へ：確認・送信 →
           </button>
         </div>
       </div>
 
-      <!-- STEP 5: 結果シート -->
-      <div class="hidden" id="step-4">
+      <!-- STEP 4: 確認・送信 -->
+      <div class="hidden" id="step-3">
         <div class="result-head">
           <div class="meta" id="result-meta"></div>
           <h2 id="result-garden-name">園さま｜HP公開ヒアリングシート</h2>

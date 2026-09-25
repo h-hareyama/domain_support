@@ -35,7 +35,7 @@ async function submitToGAS() {
   btn.textContent = '送信中...';
 
   const risk = calcRisk(state);
-  const domainLabel = { new: '新規取得', transfer: '移管', external: '他社管理継続' }[state.domain] || '—';
+  const domainLabel = getDomainPolicyLabel(state);
 
   const payload = {
     token:         SHARED_TOKEN,
@@ -45,9 +45,13 @@ async function submitToGAS() {
     patternId:     patternId(state),
     riskLevel:     risk.level,
     riskLabel:     risk.label,
-    domain:        state.domain,
+    oldsite:       state.oldsite,
+    oldsiteLabel:  getOldsiteLabel(state),
+    urlPolicy:     state.urlPolicy,
+    urlPolicyLabel: getUrlPolicyLabel(state),
+    domainPolicy:  estimatedDomainPolicy(state),
     domainLabel:   domainLabel,
-    domainApplicationInfo: state.domain === 'new' ? {
+    domainApplicationInfo: estimatedDomainPolicy(state) === 'new' ? {
       orgType:      state.newOrgType,
       orgLicensed:  state.newOrgLicensed,
       orgName:      state.newOrgName,
@@ -70,6 +74,7 @@ async function submitToGAS() {
     } : null,
     mail:          state.mail,
     mailLabel:     getMailLabel(state),
+    mailKeep:      state.mail === 'using'     ? state.mailKeep : '',
     mailWant:      state.mail === 'not_using' ? state.mailWant : '',
     oldsite:       state.oldsite,
     redirect:      state.redirect,
@@ -117,10 +122,11 @@ const state = {
   gardenName: '',
   directorName: '',
   domainName: '',
-  domain: '',     // new / transfer / external
+  oldsite: '',    // yes / no / unknown
+  urlPolicy: '',  // same / new / undecided（oldsite === 'yes' のときだけ聞く）
   mail: '',       // using / not_using / unknown
+  mailKeep: '',   // keep / change / unknown（mail === 'using' のときだけ）
   mailWant: '',   // yes / no / considering（mail === 'not_using' のときだけ）
-  oldsite: '',    // yes / no
   redirect: '',   // none / needed
   redirectWebCompany: '', redirectWebCompanyPhone: '', redirectWebCompanyEmail: '',
   redirectDomainCompany: '', redirectDomainCompanyPhone: '', redirectDomainCompanyEmail: '',
@@ -140,16 +146,58 @@ const state = {
   recipientEmail: '',
 };
 
+// ═══════════════════════════════════════════
+// 園の回答から必要な手続きを推定する
+// ═══════════════════════════════════════════
+// 園には「移管」「新規取得」といった手続きの種類を選ばせない。
+// いまの状況と希望だけ答えてもらい、実際にどう進めるかはここで推定して
+// 最終判断はプロモ側が行う。
+function estimatedDomainPolicy(s) {
+  if (s.oldsite === 'no')      return 'new';        // HPがない → 新しく取るしかない
+  if (s.urlPolicy === 'new')   return 'new';        // 変えたい → 新規取得
+  if (s.urlPolicy === 'same')  return 'continue';   // 同じがいい → 移管か他社管理継続
+  return 'undecided';
+}
+
+const DOMAIN_POLICY_LABEL = {
+  'new':     '新規取得',
+  continue:  '現ドメインを継続',
+  undecided: '未定（要相談）',
+};
+
+function getDomainPolicyLabel(s) {
+  return DOMAIN_POLICY_LABEL[estimatedDomainPolicy(s)];
+}
+
+function getUrlPolicyLabel(s) {
+  if (s.oldsite === 'no') return '（現在のHPなし）';
+  return {
+    same:      '今と同じURLを使いたい',
+    'new':     '新しいURLにしたい',
+    undecided: 'おまかせ・未定',
+  }[s.urlPolicy] || 'おまかせ・未定';   // 未選択・HP有無が不明のときもここ
+}
+
+function getOldsiteLabel(s) {
+  return { yes: 'あり', no: 'なし', unknown: 'わからない' }[s.oldsite] || '—';
+}
+
 function getMailLabel(s) {
-  if (s.mail === 'using')   return 'ドメインメール利用中';
+  if (s.mail === 'using') {
+    const keep = {
+      keep:    'ドメインメール利用中（公開後もそのまま）',
+      change:  'ドメインメール利用中（公開後に変更希望）',
+      unknown: 'ドメインメール利用中（公開後は要相談）',
+    }[s.mailKeep];
+    return keep || 'ドメインメール利用中';
+  }
   if (s.mail === 'unknown') return 'わからない（要確認）';
   if (s.mail === 'not_using') {
-    const want = {
+    return {
       yes:         '未利用（今後利用したい）',
       no:          '未利用（今後も利用しない）',
       considering: '未利用（検討中）',
-    }[s.mailWant];
-    return want || '未利用';
+    }[s.mailWant] || '未利用';
   }
   return '—';
 }
@@ -159,6 +207,8 @@ const DRAFT_VERSION = 1;
 const DRAFT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 let draftSaveTimer = null;
 let currentStep = 0;
+// 結果シート（確認・送信）のステップ番号。入力ステップは 0〜2。
+const RESULT_STEP = 3;
 let isRestoringDraft = false;
 
 function getSelectedValue(name) {
@@ -173,14 +223,19 @@ function syncCoreStateFromDOM() {
   if (gardenName) state.gardenName = gardenName.value.trim();
   if (directorName) state.directorName = directorName.value.trim();
 
-  state.domain = getSelectedValue('domain') || state.domain;
-  state.mail = getSelectedValue('mail') || state.mail;
-  state.mailWant = state.mail === 'not_using'
-    ? (getSelectedValue('mail-want') || state.mailWant)
-    : '';
   state.oldsite = getSelectedValue('oldsite') || state.oldsite;
+  state.urlPolicy = state.oldsite === 'yes'
+    ? (getSelectedValue('urlpolicy') || state.urlPolicy)
+    : (state.oldsite === 'no' ? 'new' : '');
   state.redirect = state.oldsite === 'yes'
     ? (getSelectedValue('redirect') || state.redirect)
+    : '';
+  state.mail = getSelectedValue('mail') || state.mail;
+  state.mailKeep = state.mail === 'using'
+    ? (getSelectedValue('mail-keep') || state.mailKeep)
+    : '';
+  state.mailWant = state.mail === 'not_using'
+    ? (getSelectedValue('mail-want') || state.mailWant)
     : '';
   syncAnswersFromDOM();
 }
@@ -222,11 +277,12 @@ function saveDraft() {
       state,
       fields: getDraftFields(),
       radios: {
-        domain: getSelectedValue('domain'),
-        mail: getSelectedValue('mail'),
-        mailWant: getSelectedValue('mail-want'),
         oldsite: getSelectedValue('oldsite'),
+        urlPolicy: getSelectedValue('urlpolicy'),
         redirect: getSelectedValue('redirect'),
+        mail: getSelectedValue('mail'),
+        mailKeep: getSelectedValue('mail-keep'),
+        mailWant: getSelectedValue('mail-want'),
       },
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -255,17 +311,18 @@ function clearDraft() {
 }
 
 function updateConditionalFields() {
-  const mail = getSelectedValue('mail') || state.mail;
-  const mailWantGroup = document.getElementById('mail-want-group');
-  if (mailWantGroup) {
-    mailWantGroup.classList.toggle('hidden', mail !== 'not_using');
-  }
-
   const oldsite = getSelectedValue('oldsite') || state.oldsite;
-  const redirectGroup = document.getElementById('redirect-group');
-  if (redirectGroup) {
-    redirectGroup.classList.toggle('hidden', oldsite !== 'yes');
-  }
+  toggleGroup('urlpolicy-group', oldsite === 'yes');
+  toggleGroup('redirect-group',  oldsite === 'yes');
+
+  const mail = getSelectedValue('mail') || state.mail;
+  toggleGroup('mail-keep-group', mail === 'using');
+  toggleGroup('mail-want-group', mail === 'not_using');
+}
+
+function toggleGroup(id, show) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden', !show);
 }
 
 function restoreDraft() {
@@ -301,11 +358,12 @@ function restoreDraft() {
   });
 
   const radioNames = {
-    domain: 'domain',
-    mail: 'mail',
-    mailWant: 'mail-want',
     oldsite: 'oldsite',
+    urlPolicy: 'urlpolicy',
     redirect: 'redirect',
+    mail: 'mail',
+    mailKeep: 'mail-keep',
+    mailWant: 'mail-want',
   };
   Object.entries(radioNames).forEach(([key, name]) => {
     document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
@@ -314,8 +372,8 @@ function restoreDraft() {
   });
 
   updateConditionalFields();
-  const step = Math.max(0, Math.min(4, Number(draft.currentStep) || 0));
-  if (step === 4) generateResult(true);
+  const step = Math.max(0, Math.min(RESULT_STEP, Number(draft.currentStep) || 0));
+  if (step === RESULT_STEP) generateResult(true);
   else goStep(step, true);
   currentStep = step;
   isRestoringDraft = false;
@@ -327,111 +385,85 @@ function restoreDraft() {
 // ヒアリング項目マスタ
 // ═══════════════════════════════════════════
 const QUESTIONS = [
-  // ── 共通 ──
-  { id: 'q-www', cat: '基本', required: true,
-    q: 'URLに「www」を付けますか？',
-    why: 'URLの形式に影響します。制作前に確認が必要な項目です',
-    placeholder: '例：付ける（www.example.ed.jp）/ 付けない',
+  // ── 全員に聞く ──
+  { id: 'q-www', cat: '基本', required: false,
+    q: 'URLに「www」を付けますか？（ご希望があれば）',
+    why: 'ご希望がなければ空欄で構いません。スマートエデュケーションで判断します',
+    placeholder: '例：付けたい（www.example.ed.jp）/ 付けたくない',
     cond: () => true, type: 'text' },
+  { id: 'q-related', cat: '基本', required: false,
+    q: '関連するホームページ（任意）',
+    why: '法人サイトや系列園など、同じ会社で管理しているサイトがあると、設定の影響範囲が変わることがあります',
+    placeholder: '例：法人サイト https://... / 系列園 https://... / 採用サイト https://...',
+    cond: () => true, type: 'textarea' },
 
-  // ── ドメイン新規 ──
-  { id: 'q-newdom-1', cat: 'ドメイン', required: true,
-    q: '希望ドメインの候補（第1〜第3希望）',
-    why: 'ご希望のURLが取得できない場合の候補として使います',
+  // ── 現在のホームページがある場合 ──
+  { id: 'q-old-1', cat: 'ホームページ', required: true,
+    q: '現在のホームページのURL',
+    why: '新しいホームページへのご案内設定や、URLの引き継ぎ確認に使います',
+    placeholder: '例：https://www.example.com',
+    cond: s => s.oldsite === 'yes', type: 'text' },
+  { id: 'q-old-3', cat: 'ホームページ', required: true,
+    q: '現在のホームページを制作・管理している会社名',
+    why: 'URLの引き継ぎやご案内設定について、こちらから直接ご相談します',
+    placeholder: '例：〇〇株式会社',
+    cond: s => s.oldsite === 'yes', type: 'text' },
+  { id: 'q-old-3-phone', cat: 'ホームページ', required: false,
+    q: '制作・管理会社の電話番号',
+    why: 'こちらからご連絡する際に使います。わからなければ空欄で構いません',
+    placeholder: '例：03-XXXX-XXXX',
+    cond: s => s.oldsite === 'yes', type: 'tel' },
+  { id: 'q-old-3-email', cat: 'ホームページ', required: false,
+    q: '制作・管理会社のメールアドレス',
+    why: 'こちらからご連絡する際に使います。わからなければ空欄で構いません',
+    placeholder: '例：support@example.com',
+    cond: s => s.oldsite === 'yes', type: 'email' },
+  { id: 'q-old-2', cat: 'ホームページ', required: false,
+    q: '現在のホームページの公開先サービス（わかれば）',
+    why: 'ご案内設定の方法がサービスによって異なります',
+    placeholder: '例：Wix / ジンドゥー / WordPress',
+    cond: s => s.oldsite === 'yes', type: 'text' },
+  { id: 'q-old-4', cat: 'ホームページ', required: false,
+    q: '現在のホームページは、いつ頃まで残せそうですか？（わかれば）',
+    why: 'ご案内を続けるために、現在のURLのご契約を継続いただく期間の目安です',
+    placeholder: '例：2027年9月まで / 未定',
+    cond: s => s.oldsite === 'yes' && s.redirect === 'needed', type: 'text' },
+
+  // ── 今と同じURLを使いたい場合 ──
+  { id: 'q-url-expire', cat: 'ホームページ', required: false,
+    q: '今のURLの有効期限（わかれば）',
+    why: '期限が近いと先に更新が必要になることがあります。更新のご案内メールなどに記載されています',
+    placeholder: '例：2027年3月31日 / わからない',
+    cond: s => s.urlPolicy === 'same', type: 'text' },
+
+  // ── 新しいURLにする場合 ──
+  { id: 'q-newdom-1', cat: 'ホームページ', required: false,
+    q: 'ご希望のURLの候補（第1〜第3希望）',
+    why: 'ご希望のURLが取得できない場合の候補として使います。おまかせでも構いません',
     placeholder: '例：jiro-yochien.ed.jp, jiro.ed.jp, jiro-kindergarten.jp',
-    cond: s => s.domain === 'new', type: 'textarea' },
-  // ── ドメイン移管 ──
-  { id: 'q-mov-1', cat: 'ドメイン', required: true,
-    q: '現在のドメイン管理会社',
-    why: 'URL管理の引き継ぎ先として確認が必要です',
-    placeholder: '例：〇〇株式会社 / お名前.com',
-    cond: s => s.domain === 'transfer', type: 'text' },
-  { id: 'q-mov-2', cat: 'ドメイン', required: true,
-    q: 'AuthCode（移管認証コード）の取得状況',
-    why: 'URLを移管するために必要なコードです（有効期限があります）',
-    placeholder: '例：取得済み / 管理会社に依頼中',
-    cond: s => s.domain === 'transfer', type: 'text' },
-  { id: 'q-mov-3', cat: 'ドメイン', required: true,
-    q: 'ドメイン有効期限',
-    why: '期限が近い場合、手続きができないことがあります',
-    placeholder: '例：2027年3月31日',
-    cond: s => s.domain === 'transfer', type: 'text' },
-  { id: 'q-mov-4', cat: 'ドメイン', required: false,
-    q: '移管ロック（DomainTransferLocked）の状況',
-    why: 'ロックがかかっている場合は事前に解除が必要です',
-    placeholder: '例：解除済み / 解除依頼中',
-    cond: s => s.domain === 'transfer', type: 'text' },
+    cond: s => estimatedDomainPolicy(s) === 'new', type: 'textarea' },
 
-  // ── ドメイン他社継続 ──
-  { id: 'q-ext-1', cat: 'ドメイン', required: true,
-    q: '現在のドメイン管理会社',
-    why: 'URLの設定変更をお願いする会社の確認に必要です',
-    placeholder: '例：〇〇株式会社 / お名前.com',
-    cond: s => s.domain === 'external', type: 'text' },
-  { id: 'q-ext-2', cat: 'ドメイン', required: true,
-    q: '管理会社への連絡窓口（メール/電話）',
-    why: 'URL設定の変更依頼を送る連絡先として使います',
-    placeholder: '例：info@example.com / 03-XXXX-XXXX',
-    cond: s => s.domain === 'external', type: 'text' },
-  { id: 'q-ext-3', cat: 'ドメイン', required: true,
-    q: '管理会社の管理画面ログイン情報の有無',
-    why: '貴園が自分で対応できる範囲を確認するために必要です',
-    placeholder: '例：ID・パスワードあり / 不明',
-    cond: s => s.domain === 'external', type: 'text' },
-
-  // ── メール：ドメインメールを利用中の場合のみ ──
-  { id: 'q-mailcon-1', cat: 'メール', required: true,
-    q: '現在お使いのメールサービス名',
-    why: '公開作業でメールが止まらないよう、現在の環境を把握するために必要です',
-    placeholder: '例：さくらメール / Xserver / Google Workspace',
-    cond: s => s.mail === 'using', type: 'text' },
+  // ── ドメインメールを利用中の場合 ──
   { id: 'q-mailcon-2', cat: 'メール', required: true,
     q: 'メールを契約している会社名',
-    why: '設定内容の確認をお願いする際の連絡先として使います',
+    why: 'メールを止めずに引き継ぐため、設定内容の確認をお願いする連絡先として使います',
     placeholder: '例：さくらインターネット / エックスサーバー株式会社',
     cond: s => s.mail === 'using', type: 'text' },
+  { id: 'q-mailcon-1', cat: 'メール', required: false,
+    q: '現在お使いのメールサービス名（わかれば）',
+    why: '現在のメール環境を把握するために使います',
+    placeholder: '例：さくらメール / Xserver / Google Workspace',
+    cond: s => s.mail === 'using', type: 'text' },
   { id: 'q-mailcon-3', cat: 'メール', required: false,
-    q: '現在お使いのメールアドレス',
-    why: '引き継ぎ対象を把握するために使います。わかる範囲で構いません',
+    q: '現在お使いのメールアドレス（わかる範囲で）',
+    why: '引き継ぎ対象を把握するために使います',
     placeholder: '例：info@example.ed.jp、jimu@example.ed.jp',
     cond: s => s.mail === 'using', type: 'textarea' },
   { id: 'q-mailcon-5x', cat: 'メール', required: false,
     q: 'その他・補足（任意）',
     why: '気になることや確認したいことがあれば入力してください',
     placeholder: '例：メールアドレスは3つです / 切替時期の希望など',
-    cond: s => s.mail === 'using', type: 'textarea' },
-
-  // ── 現在公開中のホームページ ──
-  { id: 'q-old-1', cat: '現在のHP', required: true,
-    q: '現在のホームページのURL',
-    why: '新しいホームページへのご案内設定に必要です',
-    placeholder: '例：https://www.example.com',
-    cond: s => s.oldsite === 'yes', type: 'text' },
-  { id: 'q-old-2', cat: '現在のHP', required: true,
-    q: '現在のホームページの公開先サービス',
-    why: 'ご案内設定の方法がサービスによって異なります。わからなければ空欄で構いません',
-    placeholder: '例：Wix / ジンドゥー / WordPress',
-    cond: s => s.oldsite === 'yes', type: 'text' },
-  { id: 'q-old-3', cat: '現在のHP', required: true,
-    q: '現在のホームページを制作・管理している会社名',
-    why: 'ご案内設定や解約のご相談をする際の連絡先として使います',
-    placeholder: '例：〇〇株式会社',
-    cond: s => s.oldsite === 'yes', type: 'text' },
-  { id: 'q-old-3-phone', cat: '現在のHP', required: false,
-    q: '制作・管理会社の電話番号',
-    why: 'ご案内設定について確認する際の連絡先として使います',
-    placeholder: '例：03-XXXX-XXXX',
-    cond: s => s.oldsite === 'yes', type: 'tel' },
-  { id: 'q-old-3-email', cat: '現在のHP', required: false,
-    q: '制作・管理会社のメールアドレス',
-    why: 'ご案内設定について確認する際の連絡先として使います',
-    placeholder: '例：support@example.com',
-    cond: s => s.oldsite === 'yes', type: 'email' },
-  { id: 'q-old-4', cat: '現在のHP', required: false,
-    q: '現在のホームページを残せる期間',
-    why: 'ご案内を続けるために、現在のURLのご契約を継続いただく期間の目安です',
-    placeholder: '例：2027年9月まで / 未定',
-    cond: s => s.oldsite === 'yes' && s.redirect === 'needed', type: 'text' },
+    cond: s => s.mail === 'using' || s.mail === 'not_using', type: 'textarea' },
 ];
 
 // ═══════════════════════════════════════════
@@ -526,23 +558,28 @@ function buildOrgSection() {
 // リスク判定
 // ═══════════════════════════════════════════
 function calcRisk(s) {
-  // 高：移管 ＋ ドメインメールを利用中（または利用状況が不明）
-  //   → DNSが丸ごと再構築されるため、MX/SPFを設定ミスするとメールが止まる
-  if (s.domain === 'transfer' && (s.mail === 'using' || s.mail === 'unknown')) return {
+  const est = estimatedDomainPolicy(s);
+
+  // 高：今と同じURLを使う ＋ ドメインメール利用中（または不明）
+  //   URLを引き継ぐとDNSを組み直すことになり、MX/SPFを間違えるとメールが止まる
+  if (s.urlPolicy === 'same' && (s.mail === 'using' || s.mail === 'unknown')) return {
     level: 'high',
     label: 'リスク：高（メール停止に注意）',
-    msg: '移管によりDNSが再構築されます。MX/SPF設定を間違えるとメール停止のリスクがあります。DNS切替日とメール停止の許容時間を必ず園と合意してください。メールの利用状況が「わからない」の場合は、まず現況の確認から始めてください。'
+    msg: 'URLを引き継ぐためDNSを組み直します。MX/SPFの設定を間違えるとメールが止まります。切替日とメール停止の許容時間を必ず園と合意してください。メールの利用状況が「わからない」の場合は、まず現況の確認から始めてください。'
   };
-  // 中：移管あり / ご案内設定あり / 新規ドメイン＋ドメインメール利用中
-  //   ※ 他社管理継続＋メール利用中はAレコードのみの変更でMXは無関係 → 低
-  if (s.domain === 'transfer' ||
+
+  // 中：外部への確認・依頼が発生するケース
+  if (s.urlPolicy === 'same' ||
       s.redirect === 'needed' ||
-      (s.domain === 'new' && s.mail === 'using')) return {
+      (est === 'new' && s.mail === 'using') ||
+      s.mail === 'unknown' ||
+      s.oldsite === 'unknown') return {
     level: 'mid',
     label: 'リスク：中（外部調整が必要）',
-    msg: '移管手続き、新しいホームページへのご案内設定、新規DNS上でのメール設定など、外部への調整が必要です。リードタイムに余裕を持って動いてください。'
+    msg: '現在の管理会社への確認・依頼や、新しいURL上でのメール設定など、外部への調整が必要です。リードタイムに余裕を持って動いてください。'
   };
-  // 低：それ以外（他社管理継続＋Aレコード変更のみ、など）
+
+  // 低：新規取得でメールも絡まない、など
   return {
     level: 'low',
     label: 'リスク：低（シンプルケース）',
@@ -554,11 +591,11 @@ function calcRisk(s) {
 // パターンID
 // ═══════════════════════════════════════════
 function patternId(s) {
-  const d = { new: 'N', transfer: 'T', external: 'X' }[s.domain] || '?';
-  const m = { using: 'U', not_using: 'N', unknown: '?' }[s.mail] || '?';
-  const o = s.oldsite === 'yes' ? 'O' : '_';
-  const r = { none: '0', needed: 'R' }[s.redirect] || '_';
-  return `D${d}-M${m}-${o}${r}`;
+  const u = { same: 'S', 'new': 'N', undecided: 'U' }[s.urlPolicy] || '_';
+  const m = { using: 'U', not_using: 'N', unknown: '?' }[s.mail]   || '_';
+  const o = { yes: 'O', no: '_', unknown: '?' }[s.oldsite]         || '_';
+  const r = { needed: 'R', none: '0' }[s.redirect]                 || '_';
+  return `U${u}-M${m}-${o}${r}`;
 }
 
 // ═══════════════════════════════════════════
@@ -588,14 +625,34 @@ function goStep(n, force = false) {
       return;
     }
     if (n === 2) {
-      const d = document.querySelector('input[name="domain"]:checked');
-      if (!d) { showToast('ドメインの扱いを選択してください', 'error'); return; }
-      state.domain = d.value;
+      const o = document.querySelector('input[name="oldsite"]:checked');
+      if (!o) { showToast('現在公開中のホームページの有無を選択してください', 'error'); return; }
+      state.oldsite = o.value;
+      if (state.oldsite === 'yes') {
+        const up = document.querySelector('input[name="urlpolicy"]:checked');
+        if (!up) { showToast('新しいホームページのURLについて選択してください', 'error'); return; }
+        state.urlPolicy = up.value;
+        const rd = document.querySelector('input[name="redirect"]:checked');
+        if (!rd) { showToast('新しいホームページへのご案内の要否を選択してください', 'error'); return; }
+        state.redirect = rd.value;
+      } else {
+        // HPがなければ新しく取るしかない。ご案内設定も対象外
+        state.urlPolicy = state.oldsite === 'no' ? 'new' : '';
+        state.redirect = '';
+      }
     }
     if (n === 3) {
       const m = document.querySelector('input[name="mail"]:checked');
       if (!m) { showToast('メールの利用状況を選択してください', 'error'); return; }
       state.mail = m.value;
+      if (state.mail === 'using') {
+        const keep = document.querySelector('input[name="mail-keep"]:checked');
+        if (!keep) {
+          showToast('公開後も今のメールアドレスを使うかを選択してください', 'error');
+          return;
+        }
+        state.mailKeep = keep.value;
+      }
       if (state.mail === 'not_using') {
         const want = document.querySelector('input[name="mail-want"]:checked');
         if (!want) {
@@ -615,8 +672,9 @@ function goStep(n, force = false) {
   state.domainName = document.getElementById('domain-name').value.trim();
 
   // パネル切替
-  for (let i = 0; i <= 4; i++) {
-    document.getElementById(`step-${i}`).classList.add('hidden');
+  for (let i = 0; i <= RESULT_STEP; i++) {
+    const panel = document.getElementById(`step-${i}`);
+    if (panel) panel.classList.add('hidden');
   }
   document.getElementById(`step-${n}`).classList.remove('hidden');
 
@@ -661,40 +719,49 @@ async function lookupPostal(digits, targetId) {
 
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('input[name="mail"]').forEach(el => {
+  // 条件が外れたサブ質問は、ラジオの選択自体も外す。
+  // DOMに古い選択が残ると、後から読み直したときに復活してしまう。
+  function clearRadios(name) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = false);
+  }
+
+  document.querySelectorAll('input[name="oldsite"]').forEach(el => {
     el.addEventListener('change', () => {
-      state.mail = el.value;
-      if (el.value !== 'not_using') {
-        state.mailWant = '';
-        document.querySelectorAll('input[name="mail-want"]').forEach(r => r.checked = false);
+      state.oldsite = el.value;
+      if (el.value !== 'yes') {
+        // HPがなければURLの希望もご案内設定も聞かない
+        state.urlPolicy = el.value === 'no' ? 'new' : '';
+        state.redirect  = '';
+        clearRadios('urlpolicy');
+        clearRadios('redirect');
       }
       updateConditionalFields();
     });
   });
 
-  document.querySelectorAll('input[name="mail-want"]').forEach(el => {
-    el.addEventListener('change', () => {
-      state.mailWant = el.value;
-    });
-  });
-
-  // 現在公開中のHPあり選択時のサブ質問表示
-  document.querySelectorAll('input[name="oldsite"]').forEach(el => {
-    el.addEventListener('change', () => {
-      state.oldsite = el.value;
-      const sub = document.getElementById('redirect-group');
-      if (el.value === 'yes') {
-        sub.classList.remove('hidden');
-      } else {
-        sub.classList.add('hidden');
-        state.redirect = '';
-        document.querySelectorAll('input[name="redirect"]').forEach(r => r.checked = false);
-      }
-    });
+  document.querySelectorAll('input[name="urlpolicy"]').forEach(el => {
+    el.addEventListener('change', () => { state.urlPolicy = el.value; });
   });
 
   document.querySelectorAll('input[name="redirect"]').forEach(el => {
-    el.addEventListener('change', () => state.redirect = el.value);
+    el.addEventListener('change', () => { state.redirect = el.value; });
+  });
+
+  document.querySelectorAll('input[name="mail"]').forEach(el => {
+    el.addEventListener('change', () => {
+      state.mail = el.value;
+      if (el.value !== 'using')     { state.mailKeep = ''; clearRadios('mail-keep'); }
+      if (el.value !== 'not_using') { state.mailWant = ''; clearRadios('mail-want'); }
+      updateConditionalFields();
+    });
+  });
+
+  document.querySelectorAll('input[name="mail-keep"]').forEach(el => {
+    el.addEventListener('change', () => { state.mailKeep = el.value; });
+  });
+
+  document.querySelectorAll('input[name="mail-want"]').forEach(el => {
+    el.addEventListener('change', () => { state.mailWant = el.value; });
   });
 
   // ステッパークリックでナビゲーション（訪問済みのみ）
@@ -705,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('まず順番にステップを進めてください', 'info');
         return;
       }
-      if (i === 4) {
+      if (i === RESULT_STEP) {
         // 結果シートへは generateResult を再実行して最新内容を反映
         generateResult(true);
       } else {
@@ -738,26 +805,40 @@ function generateResult(silent = false) {
   // DOM から全ラジオ・テキストを再同期（戻って変更後も正しく反映するため）
   state.gardenName   = document.getElementById('garden-name').value.trim();
   state.directorName = document.getElementById('director-name').value.trim();
-  const domainEl   = document.querySelector('input[name="domain"]:checked');
-  const mailEl     = document.querySelector('input[name="mail"]:checked');
-  const mailWantEl = document.querySelector('input[name="mail-want"]:checked');
-  const oldsiteEl  = document.querySelector('input[name="oldsite"]:checked');
-  const redirectEl = document.querySelector('input[name="redirect"]:checked');
-  if (domainEl)  state.domain  = domainEl.value;
-  if (mailEl)    state.mail    = mailEl.value;
+  const oldsiteEl   = document.querySelector('input[name="oldsite"]:checked');
+  const urlPolicyEl = document.querySelector('input[name="urlpolicy"]:checked');
+  const redirectEl  = document.querySelector('input[name="redirect"]:checked');
+  const mailEl      = document.querySelector('input[name="mail"]:checked');
+  const mailKeepEl  = document.querySelector('input[name="mail-keep"]:checked');
+  const mailWantEl  = document.querySelector('input[name="mail-want"]:checked');
+
+  state.oldsite = oldsiteEl ? oldsiteEl.value : state.oldsite;
+  if (state.oldsite === 'yes') {
+    state.urlPolicy = urlPolicyEl ? urlPolicyEl.value : state.urlPolicy;
+    state.redirect  = redirectEl  ? redirectEl.value  : state.redirect;
+  } else {
+    state.urlPolicy = state.oldsite === 'no' ? 'new' : '';
+    state.redirect  = '';
+  }
+  if (mailEl) state.mail = mailEl.value;
+  state.mailKeep = state.mail === 'using'     && mailKeepEl ? mailKeepEl.value : '';
   state.mailWant = state.mail === 'not_using' && mailWantEl ? mailWantEl.value : '';
-  state.oldsite  = oldsiteEl  ? oldsiteEl.value  : state.oldsite;
-  state.redirect = state.oldsite === 'yes'
-    ? (redirectEl ? redirectEl.value : state.redirect)
-    : '';
 
   if (!silent) {
     if (!state.oldsite) {
       showToast('現在公開中のホームページの有無を選択してください', 'error');
       return;
     }
+    if (state.oldsite === 'yes' && !state.urlPolicy) {
+      showToast('新しいホームページのURLについて選択してください', 'error');
+      return;
+    }
     if (state.oldsite === 'yes' && !state.redirect) {
       showToast('新しいホームページへのご案内の要否を選択してください', 'error');
+      return;
+    }
+    if (!state.mail) {
+      showToast('メールの利用状況を選択してください', 'error');
       return;
     }
   }
@@ -766,7 +847,7 @@ function generateResult(silent = false) {
   const pid = patternId(state);
 
   // 最大到達ステップ更新
-  state.maxStep = 4;
+  state.maxStep = RESULT_STEP;
 
   // リダイレクトパネルの表示制御
   const rdPanel = document.getElementById('s5-redirect-panel');
@@ -777,18 +858,18 @@ function generateResult(silent = false) {
 
   // ドメイン名ラベル＆申請フォームの表示を選択に合わせて更新
   const DLABEL = {
-    new:      { label: '希望ドメイン名',   hint: '第1〜第3希望を入力してください（複数ある場合はカンマ区切りでOK）' },
-    transfer: { label: '現在のドメイン名', hint: '移管元の既存ドメインを入力してください' },
-    external: { label: '現在のドメイン名', hint: '現在使用中のドメインを入力してください' },
+    'new':     { label: 'ご希望のURL',   hint: 'お決まりであれば入力してください。おまかせの場合は空欄で構いません' },
+    continue:  { label: '現在のURL',     hint: '今お使いのURLを入力してください' },
+    undecided: { label: 'URL（わかれば）', hint: 'お決まりでなければ空欄で構いません' },
   };
-  const dlmap = DLABEL[state.domain] || {};
+  const dlmap = DLABEL[estimatedDomainPolicy(state)] || {};
   const dlbl  = document.getElementById('domain-name-label');
   const dhint = document.getElementById('domain-name-hint');
   if (dlbl)  dlbl.textContent  = dlmap.label || '希望ドメイン名 / 現在のドメイン名';
   if (dhint) dhint.textContent = dlmap.hint  || 'わかる範囲でOK';
   const ndf = document.getElementById('new-domain-form');
   if (ndf) {
-    if (state.domain === 'new') ndf.classList.remove('hidden');
+    if (estimatedDomainPolicy(state) === 'new') ndf.classList.remove('hidden');
     else ndf.classList.add('hidden');
   }
 
@@ -799,7 +880,7 @@ function generateResult(silent = false) {
     `パターンID: ${pid}　|　担当: ${state.directorName || '—'}`;
 
   const meta = [];
-  meta.push({ new: 'ドメイン新規', transfer: 'ドメイン移管', external: '他社管理継続' }[state.domain]);
+  meta.push(getDomainPolicyLabel(state));
   meta.push(`メール: ${getMailLabel(state)}`);
   if (state.oldsite === 'yes') meta.push('現在公開中のHPあり');
   if (state.redirect === 'needed') {
@@ -821,7 +902,7 @@ function generateResult(silent = false) {
   });
 
   let html = '';
-  const order = ['基本', 'ドメイン', 'メール', '現在のHP'];
+  const order = ['基本', 'ホームページ', 'メール'];
   order.forEach(cat => {
     if (!byCat[cat]) return;
     html += `<div class="section-title">${cat}</div>`;
@@ -845,7 +926,7 @@ function generateResult(silent = false) {
   });
 
   document.getElementById('result-body').innerHTML = html;
-  goStep(4);
+  goStep(RESULT_STEP);
 }
 
 function saveAnswer(qid, val) { state.answers[qid] = val; }
@@ -857,7 +938,7 @@ function syncAnswersFromDOM() {
   });
   const dnEl = document.getElementById('domain-name');
   if (dnEl) state.domainName = dnEl.value.trim();
-  if (state.domain === 'new') syncOrgFields();
+  if (estimatedDomainPolicy(state) === 'new') syncOrgFields();
   syncRedirectFields();
 }
 
@@ -873,7 +954,7 @@ function buildMarkdown() {
   // フォーム値を最新化（domainName は常に、org情報は新規取得時のみ）
   const dnEl2 = document.getElementById('domain-name');
   if (dnEl2) state.domainName = dnEl2.value.trim();
-  if (state.domain === 'new') syncOrgFields();
+  if (estimatedDomainPolicy(state) === 'new') syncOrgFields();
 
   const risk = calcRisk(state);
   const pid = patternId(state);
@@ -886,9 +967,10 @@ function buildMarkdown() {
   md += `> ${risk.msg}\n\n`;
 
   md += `## 判定条件\n`;
-  md += `- ドメイン: ${ {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] }\n`;
+  md += `- URLの希望: ${getUrlPolicyLabel(state)}\n`;
+  md += `- 想定される対応: ${getDomainPolicyLabel(state)}\n`;
   md += `- メール: ${getMailLabel(state)}\n`;
-  md += `- 現在公開中のHP: ${ state.oldsite === 'yes' ? 'あり' : 'なし' }\n`;
+  md += `- 現在公開中のHP: ${getOldsiteLabel(state)}\n`;
   if (state.redirect) md += `- 新しいHPへのご案内: ${ {none:'不要', needed:'原則どおり実施'}[state.redirect] }\n`;
   md += `\n`;
 
@@ -897,7 +979,7 @@ function buildMarkdown() {
     if (!byCat[q.cat]) byCat[q.cat] = [];
     byCat[q.cat].push(q);
   });
-  const order = ['基本', 'ドメイン', 'メール', '現在のHP'];
+  const order = ['基本', 'ホームページ', 'メール'];
   order.forEach(cat => {
     if (!byCat[cat]) return;
     md += `## ${cat}\n\n`;
@@ -912,7 +994,7 @@ function buildMarkdown() {
   });
 
   // 新規取得の場合、取得申請情報セクションを追加
-  if (state.domain === 'new') {
+  if (estimatedDomainPolicy(state) === 'new') {
     md += buildOrgSection();
   }
 
@@ -947,7 +1029,7 @@ function sendEmail() {
   const risk = calcRisk(state);
   const pid = patternId(state);
   const subject = `【HP公開ヒアリングシート】${state.gardenName || '〇〇園'}さま`;
-  const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
+  const domainLabel = getDomainPolicyLabel(state);
   const mailLabel   = getMailLabel(state);
 
   let body = `${state.gardenName || '〇〇園'} さまのHP公開ヒアリングシートです。\n\n`;
@@ -956,7 +1038,7 @@ function sendEmail() {
   body += `■ 担当: ${state.directorName || '—'}\n`;
   body += `■ ドメイン: ${domainLabel}\n`;
   body += `■ メール: ${mailLabel}\n`;
-  body += `■ 現在公開中のHP: ${state.oldsite === 'yes' ? 'あり' : 'なし'}\n`;
+  body += `■ 現在公開中のHP: ${getOldsiteLabel(state)}\n`;
   body += `\n【ヒアリング内容】\n`;
 
   const visible = QUESTIONS.filter(q => q.cond(state));
@@ -1002,7 +1084,7 @@ function sendSlack() {
   syncAnswersFromDOM();
   const risk = calcRisk(state);
   const pid = patternId(state);
-  const domainLabel = {new:'新規取得', transfer:'移管', external:'他社管理継続'}[state.domain] || '—';
+  const domainLabel = getDomainPolicyLabel(state);
   const mailLabel   = getMailLabel(state);
   const visible = QUESTIONS.filter(q => q.cond(state));
 
@@ -1011,7 +1093,7 @@ function sendSlack() {
   text += `▼担当: ${state.directorName || '—'}\n`;
   text += `▼パターンID: ${pid}\n`;
   text += `▼リスク: ${risk.label}\n`;
-  text += `▼ドメイン: ${domainLabel} / メール: ${mailLabel} / 現在公開中のHP: ${state.oldsite === 'yes' ? 'あり' : 'なし'}\n`;
+  text += `▼想定対応: ${domainLabel} / メール: ${mailLabel} / 現在公開中のHP: ${getOldsiteLabel(state)}\n`;
   if (state.domainName) text += `▼ドメイン名: ${state.domainName}\n`;
   text += `\n`;
 
@@ -1040,8 +1122,11 @@ function resetAll(askForConfirmation = true) {
   document.querySelectorAll('input[type="text"], input[type="date"], input[type="email"], input[type="tel"], textarea').forEach(el => el.value = '');
   document.querySelectorAll('input[type="radio"]').forEach(el => el.checked = false);
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
-  document.getElementById('redirect-group').classList.add('hidden');
-  document.getElementById('mail-want-group').classList.add('hidden');
+  ['urlpolicy-group', 'redirect-group', 'mail-keep-group', 'mail-want-group']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
   document.getElementById('new-domain-form').classList.add('hidden');
   const rdPanel2 = document.getElementById('s5-redirect-panel');
   if (rdPanel2) rdPanel2.classList.add('hidden');
