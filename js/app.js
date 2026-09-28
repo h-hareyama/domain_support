@@ -78,15 +78,6 @@ async function submitToGAS() {
     mailWant:      state.mail === 'not_using' ? state.mailWant : '',
     oldsite:       state.oldsite,
     redirect:      state.redirect,
-    redirectInfo:  state.redirect === 'needed' ? {
-      webCompany:         state.redirectWebCompany,
-      webCompanyPhone:    state.redirectWebCompanyPhone,
-      webCompanyEmail:    state.redirectWebCompanyEmail,
-      domainCompany:      state.redirectDomainCompany,
-      domainCompanyPhone: state.redirectDomainCompanyPhone,
-      domainCompanyEmail: state.redirectDomainCompanyEmail,
-      tool:               state.redirectTool,
-    } : null,
     answers:       state.answers,
   };
 
@@ -128,9 +119,6 @@ const state = {
   mailKeep: '',   // keep / change / unknown（mail === 'using' のときだけ）
   mailWant: '',   // yes / no / considering（mail === 'not_using' のときだけ）
   redirect: '',   // none / needed
-  redirectWebCompany: '', redirectWebCompanyPhone: '', redirectWebCompanyEmail: '',
-  redirectDomainCompany: '', redirectDomainCompanyPhone: '', redirectDomainCompanyEmail: '',
-  redirectTool: '',
   answers: {},    // 動的ヒアリング項目の回答
   checked: {},    // チェック状態
   maxStep: 0,     // 到達済み最大ステップ番号
@@ -398,11 +386,6 @@ const QUESTIONS = [
     cond: () => true, type: 'textarea' },
 
   // ── 現在のホームページがある場合 ──
-  { id: 'q-old-1', cat: 'ホームページ', required: true,
-    q: '現在のホームページのURL',
-    why: '新しいホームページへのご案内設定や、URLの引き継ぎ確認に使います',
-    placeholder: '例：https://www.example.com',
-    cond: s => s.oldsite === 'yes', type: 'text' },
   { id: 'q-old-3', cat: 'ホームページ', required: true,
     q: '現在のホームページを制作・管理している会社名',
     why: 'URLの引き継ぎやご案内設定について、こちらから直接ご相談します',
@@ -423,24 +406,17 @@ const QUESTIONS = [
     why: 'ご案内設定の方法がサービスによって異なります',
     placeholder: '例：Wix / ジンドゥー / WordPress',
     cond: s => s.oldsite === 'yes', type: 'text' },
-  { id: 'q-old-4', cat: 'ホームページ', required: false,
-    q: '現在のホームページは、いつ頃まで残せそうですか？（わかれば）',
-    why: 'ご案内を続けるために、現在のURLのご契約を継続いただく期間の目安です',
-    placeholder: '例：2027年9月まで / 未定',
-    cond: s => s.oldsite === 'yes' && s.redirect === 'needed', type: 'text' },
-
-  // ── 今と同じURLを使いたい場合 ──
-  { id: 'q-url-expire', cat: 'ホームページ', required: false,
-    q: '今のURLの有効期限（わかれば）',
-    why: '期限が近いと先に更新が必要になることがあります。更新のご案内メールなどに記載されています',
-    placeholder: '例：2027年3月31日 / わからない',
-    cond: s => s.urlPolicy === 'same', type: 'text' },
+  { id: 'q-contract-period', cat: 'ホームページ', required: false,
+    q: 'ホームページ（URL）のご契約期間はご存じですか？',
+    why: '更新の時期によっては、先に更新をお願いする場合があります。更新のご案内メールや請求書に記載されていることが多いです。わからなければ空欄で構いません',
+    placeholder: '例：2027年3月まで / 毎年4月に更新 / わからない',
+    cond: s => s.oldsite === 'yes', type: 'text' },
 
   // ── 新しいURLにする場合 ──
   { id: 'q-newdom-1', cat: 'ホームページ', required: false,
-    q: 'ご希望のURLの候補（第1〜第3希望）',
-    why: 'ご希望のURLが取得できない場合の候補として使います。おまかせでも構いません',
-    placeholder: '例：jiro-yochien.ed.jp, jiro.ed.jp, jiro-kindergarten.jp',
+    q: '第2・第3希望のURL（任意）',
+    why: '第1希望が取得できない場合の候補として使います。おまかせでも構いません',
+    placeholder: '例：jiro.ed.jp, jiro-kindergarten.jp',
     cond: s => estimatedDomainPolicy(s) === 'new', type: 'textarea' },
 
   // ── ドメインメールを利用中の場合 ──
@@ -490,23 +466,6 @@ const ORG_FIELD_MAP = [
   ['newRepRoman',     'new-rep-roman'],
   ['newRepTitle',     'new-rep-title'],
 ];
-
-const REDIRECT_FIELD_MAP = [
-  ['redirectWebCompany',         'redirect-web-company'],
-  ['redirectWebCompanyPhone',    'redirect-web-company-phone'],
-  ['redirectWebCompanyEmail',    'redirect-web-company-email'],
-  ['redirectDomainCompany',      'redirect-domain-company'],
-  ['redirectDomainCompanyPhone', 'redirect-domain-company-phone'],
-  ['redirectDomainCompanyEmail', 'redirect-domain-company-email'],
-  ['redirectTool',               'redirect-tool'],
-];
-
-function syncRedirectFields() {
-  REDIRECT_FIELD_MAP.forEach(([key, id]) => {
-    const el = document.getElementById(id);
-    if (el) state[key] = el.value.trim();
-  });
-}
 
 function syncOrgFields() {
   const dnEl = document.getElementById('domain-name');
@@ -846,18 +805,11 @@ function generateResult(silent = false) {
   // 最大到達ステップ更新
   state.maxStep = RESULT_STEP;
 
-  // リダイレクトパネルの表示制御
-  const rdPanel = document.getElementById('s5-redirect-panel');
-  if (rdPanel) {
-    if (state.redirect === 'needed') rdPanel.classList.remove('hidden');
-    else rdPanel.classList.add('hidden');
-  }
-
   // ドメイン名ラベル＆申請フォームの表示を選択に合わせて更新
   const DLABEL = {
-    'new':     { label: 'ご希望のURL',   hint: 'お決まりであれば入力してください。おまかせの場合は空欄で構いません' },
-    continue:  { label: '現在のURL',     hint: '今お使いのURLを入力してください' },
-    undecided: { label: 'URL（わかれば）', hint: 'お決まりでなければ空欄で構いません' },
+    'new':     { label: 'ご希望のURL（第1希望）', hint: 'お決まりであれば入力してください。おまかせの場合は空欄で構いません' },
+    continue:  { label: '現在のホームページのURL', hint: '今お使いのURLを入力してください' },
+    undecided: { label: 'URL（お決まりであれば）', hint: 'お決まりでなければ空欄で構いません' },
   };
   const dlmap = DLABEL[estimatedDomainPolicy(state)] || {};
   const dlbl  = document.getElementById('domain-name-label');
@@ -934,7 +886,6 @@ function syncAnswersFromDOM() {
   const dnEl = document.getElementById('domain-name');
   if (dnEl) state.domainName = dnEl.value.trim();
   if (estimatedDomainPolicy(state) === 'new') syncOrgFields();
-  syncRedirectFields();
 }
 
 function toggleCheck(qid, el) {
@@ -991,24 +942,6 @@ function buildMarkdown() {
   // 新規取得の場合、取得申請情報セクションを追加
   if (estimatedDomainPolicy(state) === 'new') {
     md += buildOrgSection();
-  }
-
-  // リダイレクト必要の場合、制作会社情報セクションを追加
-  if (state.redirect === 'needed') {
-    syncRedirectFields();
-    const toolLabel = {
-      jimdoo: 'ジンドゥー', wix: 'Wix', wordpress: 'WordPress',
-      studio: 'STUDIO', amebaownd: 'Ameba Ownd', google: 'Googleサイト', other: 'その他・不明'
-    }[state.redirectTool] || state.redirectTool || '—';
-    md += `## リダイレクト情報\n\n`;
-    md += `| 項目 | 内容 |\n|------|------|\n`;
-    md += `| WEB制作会社 | ${state.redirectWebCompany || '—'} |\n`;
-    md += `| WEB制作会社 電話番号 | ${state.redirectWebCompanyPhone || '—'} |\n`;
-    md += `| WEB制作会社 メール | ${state.redirectWebCompanyEmail || '—'} |\n`;
-    md += `| ドメイン管理会社 | ${state.redirectDomainCompany || '—'} |\n`;
-    md += `| ドメイン管理会社 電話番号 | ${state.redirectDomainCompanyPhone || '—'} |\n`;
-    md += `| ドメイン管理会社 メール | ${state.redirectDomainCompanyEmail || '—'} |\n`;
-    md += `| HPツール | ${toolLabel} |\n\n`;
   }
 
   return md;
@@ -1123,8 +1056,6 @@ function resetAll(askForConfirmation = true) {
       if (el) el.classList.add('hidden');
     });
   document.getElementById('new-domain-form').classList.add('hidden');
-  const rdPanel2 = document.getElementById('s5-redirect-panel');
-  if (rdPanel2) rdPanel2.classList.add('hidden');
   state.maxStep = 0;
   isRestoringDraft = true;
   goStep(0);
