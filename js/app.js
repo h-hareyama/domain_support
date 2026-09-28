@@ -843,9 +843,6 @@ function generateResult(silent = false) {
     }
   }
 
-  const risk = calcRisk(state);
-  const pid = patternId(state);
-
   // 最大到達ステップ更新
   state.maxStep = RESULT_STEP;
 
@@ -874,24 +871,22 @@ function generateResult(silent = false) {
   }
 
   // ヘッダー部分
+  //
+  // この画面は園の先生が見る。リスク判定・パターンID・こちらの想定対応は
+  // 社内の判断材料なので出さない。園を不安にさせるだけで、園が取れる行動もない。
+  // これらは送信時にスプレッドシートとNotionへ渡している。
   document.getElementById('result-garden-name').textContent =
-    `${state.gardenName || '〇〇園'} さま｜HP公開ヒアリングシート`;
+    `${state.gardenName || '〇〇園'} さま｜ご入力内容の確認`;
   document.getElementById('result-pattern').textContent =
-    `パターンID: ${pid}　|　担当: ${state.directorName || '—'}`;
+    state.directorName ? `担当: ${state.directorName}` : '';
 
+  // 園自身が答えた内容だけを要約として出す
   const meta = [];
-  meta.push(getDomainPolicyLabel(state));
+  meta.push(`現在公開中のHP: ${getOldsiteLabel(state)}`);
+  if (state.urlPolicy) meta.push(`URLのご希望: ${getUrlPolicyLabel(state)}`);
   meta.push(`メール: ${getMailLabel(state)}`);
-  if (state.oldsite === 'yes') meta.push('現在公開中のHPあり');
-  if (state.redirect === 'needed') {
-    meta.push('新HPへのご案内あり');
-  }
+  if (state.redirect === 'needed') meta.push('新HPへのご案内あり');
   document.getElementById('result-meta').innerHTML = meta.map(m => `<span>● ${m}</span>`).join('');
-
-  // リスクバナー
-  const banner = document.getElementById('risk-banner');
-  banner.className = `risk-banner ${risk.level}`;
-  banner.innerHTML = `<strong>${risk.label}</strong><br>${risk.msg}`;
 
   // ヒアリング項目
   const visible = QUESTIONS.filter(q => q.cond(state));
