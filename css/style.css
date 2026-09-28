@@ -1678,3 +1678,14 @@ code.inline {
   line-height: 1.75;
   color: var(--muted, #64748b);
 }
+
+/* 必須なのに未入力の項目 */
+.ask-item.is-missing {
+  outline: 2px solid var(--danger, #ef3232);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.ask-item.is-missing input,
+.ask-item.is-missing textarea {
+  border-color: var(--danger, #ef3232);
+}

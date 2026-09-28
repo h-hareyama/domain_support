@@ -24,6 +24,15 @@ async function submitToGAS() {
     showToast('園名を入力してください（Step 01）', 'error');
     return;
   }
+
+  // 「必須」と表示している項目が空のまま送れてしまわないようにする
+  const missing = requiredMissing();
+  if (missing.length) {
+    showToast(`「${missing[0].q}」を入力してください` +
+              (missing.length > 1 ? `（ほか${missing.length - 1}件）` : ''), 'error');
+    focusQuestion(missing[0].id);
+    return;
+  }
   if (!GAS_ENDPOINT) {
     showToast('送信先が未設定です。担当者にお問い合わせください', 'error');
     console.error('GAS_ENDPOINT が空です。js/app.js の先頭に、GASのウェブアプリURL（/exec で終わるもの）を設定してください。');
@@ -877,6 +886,24 @@ function generateResult(silent = false) {
 }
 
 function saveAnswer(qid, val) { state.answers[qid] = val; }
+
+/** いま表示されている必須項目のうち、未入力のものを返す。 */
+function requiredMissing() {
+  return QUESTIONS.filter(q =>
+    q.required && q.cond(state) && !(state.answers[q.id] || '').trim()
+  );
+}
+
+/** 未入力の項目までスクロールして、目印を付ける。 */
+function focusQuestion(qid) {
+  const el = document.querySelector(`[data-qid="${qid}"]`);
+  if (!el) return;
+  const item = el.closest('.ask-item') || el;
+  item.classList.add('is-missing');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.focus({ preventScroll: true });
+  el.addEventListener('input', () => item.classList.remove('is-missing'), { once: true });
+}
 
 // DOM上の全入力値を state.answers に同期（送信前に必ず呼ぶ）
 function syncAnswersFromDOM() {
