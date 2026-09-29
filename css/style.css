@@ -95,8 +95,17 @@ header.brand {
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 20px 24px;
+  /* マークを入れた分だけ上下の余白を詰めて、ヘッダーの高さを従来どおりに保つ */
+  padding: 14px 24px;
   margin-bottom: 12px;
+}
+
+.brand-mark {
+  height: 48px;
+  width: auto;
+  flex-shrink: 0;
+  /* ロゴ文字との間だけ少し詰める */
+  margin-right: -6px;
 }
 
 .logo {
@@ -1344,6 +1353,10 @@ code.inline {
   .app,
   .container {
     width: min(100% - 28px, 980px);
+  }
+
+  .brand-mark {
+    height: 36px;
   }
 
   header.brand,
