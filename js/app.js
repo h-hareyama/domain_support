@@ -49,7 +49,7 @@ async function submitToGAS() {
   const payload = {
     token:         SHARED_TOKEN,
     gardenName:    state.gardenName,
-    directorName:  state.directorName,
+    contactName:  state.contactName,
     domainName:    state.domainName,
     patternId:     patternId(state),
     riskLevel:     risk.level,
@@ -120,7 +120,7 @@ async function submitToGAS() {
 // ═══════════════════════════════════════════
 const state = {
   gardenName: '',
-  directorName: '',
+  contactName: '',
   domainName: '',
   oldsite: '',    // yes / no / unknown
   urlPolicy: '',  // same / new / undecided（oldsite === 'yes' のときだけ聞く）
@@ -215,10 +215,10 @@ function getSelectedValue(name) {
 
 function syncCoreStateFromDOM() {
   const gardenName = document.getElementById('garden-name');
-  const directorName = document.getElementById('director-name');
+  const contactName = document.getElementById('contact-name');
 
   if (gardenName) state.gardenName = gardenName.value.trim();
-  if (directorName) state.directorName = directorName.value.trim();
+  if (contactName) state.contactName = contactName.value.trim();
 
   state.oldsite = getSelectedValue('oldsite') || state.oldsite;
   state.urlPolicy = state.oldsite === 'yes'
@@ -634,7 +634,7 @@ function goStep(n, force = false) {
 
   // 状態保存
   state.gardenName = document.getElementById('garden-name').value.trim();
-  state.directorName = document.getElementById('director-name').value.trim();
+  state.contactName = document.getElementById('contact-name').value.trim();
   // 到達済み最大ステップを更新
   if (n > state.maxStep) state.maxStep = n;
   state.domainName = document.getElementById('domain-name').value.trim();
@@ -772,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function generateResult(silent = false) {
   // DOM から全ラジオ・テキストを再同期（戻って変更後も正しく反映するため）
   state.gardenName   = document.getElementById('garden-name').value.trim();
-  state.directorName = document.getElementById('director-name').value.trim();
+  state.contactName = document.getElementById('contact-name').value.trim();
   const oldsiteEl   = document.querySelector('input[name="oldsite"]:checked');
   const urlPolicyEl = document.querySelector('input[name="urlpolicy"]:checked');
   const redirectEl  = document.querySelector('input[name="redirect"]:checked');
@@ -839,7 +839,7 @@ function generateResult(silent = false) {
   document.getElementById('result-garden-name').textContent =
     `${state.gardenName || '〇〇園'} さま｜ご入力内容の確認`;
   document.getElementById('result-pattern').textContent =
-    state.directorName ? `担当: ${state.directorName}` : '';
+    state.contactName ? `ご担当者: ${state.contactName}` : '';
 
   // 園自身が答えた内容だけを要約として出す
   const meta = [];
@@ -934,7 +934,7 @@ function buildMarkdown() {
   const visible = QUESTIONS.filter(q => q.cond(state));
   let md = `# ${state.gardenName || '〇〇園'} さま｜HP公開ヒアリングシート\n\n`;
   md += `- **パターンID:** ${pid}\n`;
-  md += `- **担当ディレクター:** ${state.directorName || '—'}\n`;
+  md += `- **園のご担当者:** ${state.contactName || '—'}\n`;
   md += `- **ドメイン名:** ${state.domainName || '—'}\n`;
   md += `- **リスク評価:** ${risk.label}\n\n`;
   md += `> ${risk.msg}\n\n`;
@@ -990,7 +990,7 @@ function sendEmail() {
   let body = `${state.gardenName || '〇〇園'} さまのHP公開ヒアリングシートです。\n\n`;
   body += `■ パターンID: ${pid}\n`;
   body += `■ リスク評価: ${risk.label}\n`;
-  body += `■ 担当: ${state.directorName || '—'}\n`;
+  body += `■ ご担当者: ${state.contactName || '—'}\n`;
   body += `■ ドメイン: ${domainLabel}\n`;
   body += `■ メール: ${mailLabel}\n`;
   body += `■ 現在公開中のHP: ${getOldsiteLabel(state)}\n`;
@@ -1045,7 +1045,7 @@ function sendSlack() {
 
   let text = `【HP公開ヒアリングシート】\n`;
   text += `▼園名: ${state.gardenName || '—'}\n`;
-  text += `▼担当: ${state.directorName || '—'}\n`;
+  text += `▼ご担当者: ${state.contactName || '—'}\n`;
   text += `▼パターンID: ${pid}\n`;
   text += `▼リスク: ${risk.label}\n`;
   text += `▼想定対応: ${domainLabel} / メール: ${mailLabel} / 現在公開中のHP: ${getOldsiteLabel(state)}\n`;
