@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      GAS_ENDPOINT: ${GAS_ENDPOINT:?GAS_ENDPOINT is required}
+      GAS_SHARED_TOKEN: ${GAS_SHARED_TOKEN:?GAS_SHARED_TOKEN is required}
+      PORT: 3000
+    restart: unless-stopped
+  web:
+    build:
+      context: ..
+      dockerfile: modern/Dockerfile.web
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
